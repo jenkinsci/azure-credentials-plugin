@@ -1,0 +1,12 @@
+/bin
+/target
+/work
+
+*.idea
+*.settings
+*.project
+*.classpath
+
+nbactions-*.xml
+nb-configuration.xml
+nbactions.xml

@@ -1,0 +1,96 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.jenkins-ci.plugins</groupId>
+    <artifactId>plugin</artifactId>
+    <version>2.9</version>
+  </parent>
+
+  <artifactId>azure-credentials</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>hpi</packaging>
+  <name>Azure Credentials</name>
+  <description>Manage Azure Service Principal credentials using Jenkins Credentials API</description>
+  <url>https://wiki.jenkins-ci.org/display/JENKINS/Azure+Credentials</url>
+
+  <developers>
+    <developer>
+      <id>arroyc_microsoft</id>
+      <name>Arjun Roy Chaudhuri</name>
+      <email>arroyc@microsoft.com</email>
+    </developer>
+    <developer>
+      <id>clguiman</id>
+      <name>Claudiu Guiman</name>
+      <email>clguiman@microsoft.com</email>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:ssh://git@github.com/jenkinsci/azure-credentials.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/azure-credentials.git</developerConnection>
+    <url>https://github.com/jenkinsci/azure-credentials</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <properties>
+    <jenkins.version>1.625.3</jenkins.version>
+    <java.level>7</java.level>
+    <jenkins-test-harness.version>2.13</jenkins-test-harness.version>
+    <azuresdk.version>1.0.0-beta5</azuresdk.version>
+  </properties>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://opensource.org/licenses/MIT</url>
+    </license>
+  </licenses>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>credentials</artifactId>
+      <version>1.21</version>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.azure</groupId>
+      <artifactId>azure</artifactId>
+      <version>${azuresdk.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.jenkins-ci.main</groupId>
+        <artifactId>jenkins-core</artifactId>
+        <exclusions>
+            <exclusion>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+            </exclusion>
+        </exclusions>
+        <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </repository>
+    <repository>
+        <id>com.springsource.repository.bundles.release</id>
+        <name>SpringSource Enterprise Bundle Repository - SpringSource Bundle Releases</name>
+        <url>http://repository.springsource.com/maven/bundles/release</url>
+    </repository>
+    <repository>
+        <id>com.springsource.repository.bundles.external</id>
+        <name>SpringSource Enterprise Bundle Repository - External Bundle Releases</name>
+        <url>http://repository.springsource.com/maven/bundles/external</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
+</project>
