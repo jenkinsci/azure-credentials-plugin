@@ -66,7 +66,7 @@ public class AzureCredentials extends BaseStandardCredentials {
         }
 
         public String getTenant() {
-            if (tenant == null) {
+            if (tenant == null || StringUtils.isBlank(tenant.getPlainText())) {
                 return ServicePrincipal.getTenantFromTokenEndpoint(oauth2TokenEndpoint != null ? oauth2TokenEndpoint.getPlainText():"");
             } else {
                 return tenant.getPlainText();
@@ -188,7 +188,7 @@ public class AzureCredentials extends BaseStandardCredentials {
 
         private static String getTenantFromTokenEndpoint(String oauth2TokenEndpoint)
         {
-            if(!oauth2TokenEndpoint.matches("https://[a-zA-Z0-9\\.]*/[a-z0-9\\-]*/?.*$")) {
+            if(!oauth2TokenEndpoint.matches("https{0,1}://[a-zA-Z0-9\\.]*/[a-z0-9\\-]*/?.*$")) {
                 return "";
             } else {
                 final String[] parts = oauth2TokenEndpoint.split("/");
