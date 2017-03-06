@@ -11,7 +11,7 @@
   <packaging>hpi</packaging>
   <name>Azure Credentials</name>
   <description>Manage Azure Service Principal credentials using Jenkins Credentials API</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/Azure+Credentials</url>
+  <url>https://wiki.jenkins-ci.org/display/JENKINS/Azure+Credentials+plugin</url>
 
   <developers>
     <developer>
@@ -27,9 +27,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:ssh://git@github.com/jenkinsci/azure-credentials.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/azure-credentials.git</developerConnection>
-    <url>https://github.com/jenkinsci/azure-credentials</url>
+    <connection>scm:git:ssh://git@github.com/jenkinsci/azure-credentials-plugin.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/azure-credentials-plugin.git</developerConnection>
+    <url>https://github.com/jenkinsci/azure-credentials-plugin</url>
     <tag>HEAD</tag>
   </scm>
 
