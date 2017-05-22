@@ -139,8 +139,8 @@ public class AzureCredentials extends BaseStandardCredentials {
             this.clientId = Secret.fromString(clientId);
             this.clientSecret = Secret.fromString(clientSecret);
             this.oauth2TokenEndpoint = Secret.fromString(oauth2TokenEndpoint);
-            this.tenant = Secret.fromString(
-                    ServicePrincipal.getTenantFromTokenEndpoint(oauth2TokenEndpoint));
+            this.tenant = Secret.fromString(ServicePrincipal.getTenantFromTokenEndpoint(
+                    this.oauth2TokenEndpoint.getPlainText()));
 
             if (StringUtils.isBlank(serviceManagementURL)) {
                 this.serviceManagementURL = Constants.DEFAULT_MANAGEMENT_URL;
