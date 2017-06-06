@@ -44,7 +44,7 @@ public class AzureCredentials extends BaseStandardCredentials {
         public static final String DEFAULT_GRAPH_ENDPOINT
                 = "https://graph.windows.net/";
         public static final String DEFAULT_OAUTH_PREFIX
-                = "https://login.windows.net/";
+                = "https://login.windows.net/<TenantId>";
     }
 
     public static class ServicePrincipal implements java.io.Serializable {
