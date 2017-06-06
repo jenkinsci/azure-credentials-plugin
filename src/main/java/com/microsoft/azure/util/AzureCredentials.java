@@ -287,11 +287,11 @@ public class AzureCredentials extends BaseStandardCredentials {
     }
 
     public final String getSubscriptionId() {
-        return data.subscriptionId.getEncryptedValue();
+        return data.subscriptionId.getPlainText();
     }
 
     public final String getClientId() {
-        return data.clientId.getEncryptedValue();
+        return data.clientId.getPlainText();
     }
 
     public final String getClientSecret() {
@@ -299,7 +299,7 @@ public class AzureCredentials extends BaseStandardCredentials {
     }
 
     public final String getOauth2TokenEndpoint() {
-        return data.oauth2TokenEndpoint.getEncryptedValue();
+        return data.oauth2TokenEndpoint.getPlainText();
     }
 
     public final String getServiceManagementURL() {
