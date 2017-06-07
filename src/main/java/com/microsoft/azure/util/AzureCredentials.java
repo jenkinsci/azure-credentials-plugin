@@ -43,6 +43,8 @@ public class AzureCredentials extends BaseStandardCredentials {
                 = "https://management.azure.com/";
         public static final String DEFAULT_GRAPH_ENDPOINT
                 = "https://graph.windows.net/";
+        public static final String DEFAULT_OAUTH_PREFIX
+                = "https://login.windows.net/<TenantId>";
     }
 
     public static class ServicePrincipal implements java.io.Serializable {
@@ -285,11 +287,11 @@ public class AzureCredentials extends BaseStandardCredentials {
     }
 
     public final String getSubscriptionId() {
-        return data.subscriptionId.getEncryptedValue();
+        return data.subscriptionId.getPlainText();
     }
 
     public final String getClientId() {
-        return data.clientId.getEncryptedValue();
+        return data.clientId.getPlainText();
     }
 
     public final String getClientSecret() {
@@ -297,7 +299,7 @@ public class AzureCredentials extends BaseStandardCredentials {
     }
 
     public final String getOauth2TokenEndpoint() {
-        return data.oauth2TokenEndpoint.getEncryptedValue();
+        return data.oauth2TokenEndpoint.getPlainText();
     }
 
     public final String getServiceManagementURL() {
@@ -340,6 +342,10 @@ public class AzureCredentials extends BaseStandardCredentials {
 
         public final String getDefaultGraphEndpoint() {
             return Constants.DEFAULT_GRAPH_ENDPOINT;
+        }
+
+        public final String getDefaultOAuthPrefix() {
+            return Constants.DEFAULT_OAUTH_PREFIX;
         }
 
         public final FormValidation doVerifyConfiguration(
