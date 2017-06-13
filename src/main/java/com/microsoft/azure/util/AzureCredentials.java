@@ -15,17 +15,35 @@ import com.microsoft.azure.credentials.ApplicationTokenCredentials;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.resources.Subscription;
 import hudson.Extension;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class AzureCredentials extends BaseStandardCredentials {
+    static final LinkedHashMap<String, Pair<String, AzureEnvironment>> ENVIRONMENT_MAP = new LinkedHashMap<>();
+
+    static {
+        ENVIRONMENT_MAP.put("AZURE", Pair.of("Azure", AzureEnvironment.AZURE));
+        ENVIRONMENT_MAP.put("AZURE_CHINA", Pair.of("Azure China", AzureEnvironment.AZURE_CHINA));
+        ENVIRONMENT_MAP.put("AZURE_GERMANY", Pair.of("Azure Germany", AzureEnvironment.AZURE_GERMANY));
+        ENVIRONMENT_MAP.put("AZURE_US_GOVERNMENT", Pair.of("Azure US Government", AzureEnvironment.AZURE_US_GOVERNMENT));
+    }
+
+    static final String DEFAULT_ENVIRONMENT = "AZURE";
+
     public static class ValidationException extends Exception {
 
         public ValidationException(final String message) {
@@ -33,31 +51,22 @@ public class AzureCredentials extends BaseStandardCredentials {
         }
     }
 
-    public static class Constants {
-
-        public static final String DEFAULT_MANAGEMENT_URL
-                = "https://management.core.windows.net/";
-        public static final String DEFAULT_AUTHENTICATION_ENDPOINT
-                = "https://login.microsoftonline.com/";
-        public static final String DEFAULT_RESOURCE_MANAGER_ENDPOINT
-                = "https://management.azure.com/";
-        public static final String DEFAULT_GRAPH_ENDPOINT
-                = "https://graph.windows.net/";
-        public static final String DEFAULT_OAUTH_PREFIX
-                = "https://login.windows.net/<TenantId>";
-    }
-
     public static class ServicePrincipal implements java.io.Serializable {
+
+        // version marker for ease of possible future data migration
+        private final String azureSDKVersion = "1.1.0";
 
         private final Secret subscriptionId;
         private final Secret clientId;
         private final Secret clientSecret;
-        private final Secret oauth2TokenEndpoint; //keeping this for backwards compatibility
-        private final String serviceManagementURL;
         private final Secret tenant;
-        private final String authenticationEndpoint;
-        private final String resourceManagerEndpoint;
-        private final String graphEndpoint;
+        private final String environmentStr;
+        private final String managementEndpointUrl;
+        private final String activeDirectoryEndpointUrl;
+        private final String resourceManagerEndpointUrl;
+        private final String graphEndpointUrl;
+
+        private transient AzureEnvironment azureEnvironment;
 
         public final String getSubscriptionId() {
             if (subscriptionId == null) {
@@ -84,105 +93,133 @@ public class AzureCredentials extends BaseStandardCredentials {
         }
 
         public final String getTenant() {
-            if (tenant == null || StringUtils.isBlank(tenant.getPlainText())) {
-                if (oauth2TokenEndpoint != null) {
-                    return ServicePrincipal.getTenantFromTokenEndpoint(
-                            oauth2TokenEndpoint.getPlainText());
-                } else {
-                    return ServicePrincipal.getTenantFromTokenEndpoint("");
-                }
+            if (tenant == null) {
+                return "";
             } else {
                 return tenant.getPlainText();
             }
         }
 
-        public final String getServiceManagementURL() {
-            if (serviceManagementURL == null) {
-                return Constants.DEFAULT_MANAGEMENT_URL;
+        public String getEnvironmentStr() {
+            if (environmentStr == null) {
+                return "";
             } else {
-                return serviceManagementURL;
+                return environmentStr;
             }
         }
 
-        public final String getAuthenticationEndpoint() {
-            if (authenticationEndpoint == null) {
-                return Constants.DEFAULT_AUTHENTICATION_ENDPOINT;
+        public String getManagementEndpointUrl() {
+            if (managementEndpointUrl == null) {
+                return "";
             } else {
-                return authenticationEndpoint;
+                return managementEndpointUrl;
             }
         }
 
-        public final String getResourceManagerEndpoint() {
-            if (resourceManagerEndpoint == null) {
-                return Constants.DEFAULT_RESOURCE_MANAGER_ENDPOINT;
+        public String getActiveDirectoryEndpointUrl() {
+            if (activeDirectoryEndpointUrl == null) {
+                return "";
             } else {
-                return resourceManagerEndpoint;
+                return activeDirectoryEndpointUrl;
             }
         }
 
-        public final String getGraphEndpoint() {
-            if (graphEndpoint == null) {
-                return Constants.DEFAULT_GRAPH_ENDPOINT;
+        public String getResourceManagerEndpointUrl() {
+            if (resourceManagerEndpointUrl == null) {
+                return "";
             } else {
-                return graphEndpoint;
+                return resourceManagerEndpointUrl;
             }
+        }
+
+        public String getGraphEndpointUrl() {
+            if (activeDirectoryEndpointUrl == null) {
+                return "";
+            } else {
+                return graphEndpointUrl;
+            }
+        }
+
+        public AzureEnvironment getAzureEnvironment() {
+            if (azureEnvironment != null) {
+                return azureEnvironment;
+            }
+
+            Pair<String, AzureEnvironment> pair = ENVIRONMENT_MAP.get(environmentStr);
+            AzureEnvironment base;
+            if (pair == null) {
+                base = AzureEnvironment.AZURE;
+            } else {
+                base = pair.getRight();
+            }
+
+            HashMap<String, String> endpoints = new HashMap<>(base.endpoints());
+            boolean overridden = false;
+            if (StringUtils.isNotBlank(managementEndpointUrl)) {
+                endpoints.put("managementEndpointUrl", managementEndpointUrl);
+                overridden = true;
+            }
+            if (StringUtils.isNotBlank(activeDirectoryEndpointUrl)) {
+                endpoints.put("activeDirectoryEndpointUrl", activeDirectoryEndpointUrl);
+                overridden = true;
+            }
+            if (StringUtils.isNotBlank(resourceManagerEndpointUrl)) {
+                endpoints.put("resourceManagerEndpointUrl", resourceManagerEndpointUrl);
+                overridden = true;
+            }
+            if (StringUtils.isNotBlank(graphEndpointUrl)) {
+                endpoints.put("activeDirectoryGraphResourceId", graphEndpointUrl);
+                overridden = true;
+            }
+            if (overridden) {
+                azureEnvironment = new AzureEnvironment(endpoints);
+            } else {
+                azureEnvironment = base;
+            }
+            return azureEnvironment;
         }
 
         public ServicePrincipal(
                 final String subscriptionId,
                 final String clientId,
                 final String clientSecret,
-                final String oauth2TokenEndpoint,
-                final String serviceManagementURL,
-                final String authenticationEndpoint,
-                final String resourceManagerEndpoint,
-                final String graphEndpoint) {
-            this.subscriptionId = Secret.fromString(subscriptionId);
-            this.clientId = Secret.fromString(clientId);
-            this.clientSecret = Secret.fromString(clientSecret);
-            this.oauth2TokenEndpoint = Secret.fromString(oauth2TokenEndpoint);
-            this.tenant = Secret.fromString(ServicePrincipal.getTenantFromTokenEndpoint(
-                    this.oauth2TokenEndpoint.getPlainText()));
+                final String tenant,
+                final String environmentStr,
+                final String managementEndpointUrl,
+                final String activeDirectoryEndpointUrl,
+                final String resourceManagerEndpointUrl,
+                final String graphEndpointUrl) {
+            this.subscriptionId = Secret.fromString(StringUtils.trimToEmpty(subscriptionId));
+            this.clientId = Secret.fromString(StringUtils.trimToEmpty(clientId));
+            this.clientSecret = Secret.fromString(StringUtils.trimToEmpty(clientSecret));
+            this.tenant = Secret.fromString(StringUtils.trimToEmpty(tenant));
+            this.environmentStr = StringUtils.trimToEmpty(environmentStr);
+            this.managementEndpointUrl = StringUtils.trimToEmpty(managementEndpointUrl);
+            this.activeDirectoryEndpointUrl = StringUtils.trimToEmpty(activeDirectoryEndpointUrl);
+            this.resourceManagerEndpointUrl = StringUtils.trimToEmpty(resourceManagerEndpointUrl);
+            this.graphEndpointUrl = StringUtils.trimToEmpty(graphEndpointUrl);
 
-            if (StringUtils.isBlank(serviceManagementURL)) {
-                this.serviceManagementURL = Constants.DEFAULT_MANAGEMENT_URL;
-            } else {
-                this.serviceManagementURL = serviceManagementURL;
-            }
-            if (StringUtils.isBlank(authenticationEndpoint)) {
-                this.authenticationEndpoint = Constants.DEFAULT_AUTHENTICATION_ENDPOINT;
-            } else {
-                this.authenticationEndpoint = authenticationEndpoint;
-            }
-            if (StringUtils.isBlank(resourceManagerEndpoint)) {
-                this.resourceManagerEndpoint = Constants.DEFAULT_RESOURCE_MANAGER_ENDPOINT;
-            } else {
-                this.resourceManagerEndpoint = resourceManagerEndpoint;
-            }
-            if (StringUtils.isBlank(graphEndpoint)) {
-                this.graphEndpoint = Constants.DEFAULT_GRAPH_ENDPOINT;
-            } else {
-                this.graphEndpoint = graphEndpoint;
-            }
+            this.azureEnvironment = getAzureEnvironment();
         }
 
         public ServicePrincipal() {
             this.subscriptionId = Secret.fromString("");
             this.clientId = Secret.fromString("");
             this.clientSecret = Secret.fromString("");
-            this.oauth2TokenEndpoint = Secret.fromString("");
             this.tenant = Secret.fromString("");
-            this.serviceManagementURL = Constants.DEFAULT_MANAGEMENT_URL;
-            this.authenticationEndpoint = Constants.DEFAULT_AUTHENTICATION_ENDPOINT;
-            this.resourceManagerEndpoint = Constants.DEFAULT_RESOURCE_MANAGER_ENDPOINT;
-            this.graphEndpoint = Constants.DEFAULT_GRAPH_ENDPOINT;
+            this.environmentStr = "AZURE";
+            this.managementEndpointUrl = "";
+            this.activeDirectoryEndpointUrl = "";
+            this.resourceManagerEndpointUrl = "";
+            this.graphEndpointUrl = "";
         }
 
         public final boolean isBlank() {
             return StringUtils.isBlank(subscriptionId.getPlainText())
                     || StringUtils.isBlank(clientId.getPlainText())
-                    || StringUtils.isBlank(oauth2TokenEndpoint.getPlainText())
-                    || StringUtils.isBlank(clientSecret.getPlainText());
+                    || StringUtils.isBlank(tenant.getPlainText())
+                    || StringUtils.isBlank(clientSecret.getPlainText())
+                    || StringUtils.isBlank(environmentStr);
         }
 
         public final boolean validate() throws ValidationException {
@@ -195,11 +232,9 @@ public class AzureCredentials extends BaseStandardCredentials {
             if (StringUtils.isBlank(clientSecret.getPlainText())) {
                 throw new ValidationException(Messages.Azure_ClientSecret_Missing());
             }
-            if (StringUtils.isBlank(oauth2TokenEndpoint.getPlainText())) {
+            if (StringUtils.isBlank(tenant.getPlainText())) {
+                // FIXME: error message
                 throw new ValidationException(Messages.Azure_OAuthToken_Missing());
-            }
-            if (StringUtils.isBlank(getTenant())) {
-                throw new ValidationException(Messages.Azure_OAuthToken_Malformed());
             }
 
             try {
@@ -209,12 +244,8 @@ public class AzureCredentials extends BaseStandardCredentials {
                                 getClientId(),
                                 getTenant(),
                                 getClientSecret(),
-                                new AzureEnvironment(
-                                        getAuthenticationEndpoint(),
-                                        getServiceManagementURL(),
-                                        getResourceManagerEndpoint(),
-                                        getGraphEndpoint())
-                        ));
+                                getAzureEnvironment())
+                );
                 for (Subscription subscription : auth.subscriptions().list()) {
                     if (subscription.subscriptionId().equalsIgnoreCase(credentialSubscriptionId)) {
                         return true;
@@ -228,7 +259,7 @@ public class AzureCredentials extends BaseStandardCredentials {
 
         private static final int TOKEN_ENDPOINT_URL_ENDPOINT_POSTION = 3;
 
-        private static String getTenantFromTokenEndpoint(final String oauth2TokenEndpoint) {
+        public static String getTenantFromTokenEndpoint(final String oauth2TokenEndpoint) {
             if (!oauth2TokenEndpoint.matches(
                     "https{0,1}://[a-zA-Z0-9\\.]*/[a-z0-9\\-]*/?.*$")) {
                 return "";
@@ -254,21 +285,23 @@ public class AzureCredentials extends BaseStandardCredentials {
             final String subscriptionId,
             final String clientId,
             final String clientSecret,
-            final String oauth2TokenEndpoint,
-            final String serviceManagementURL,
-            final String authenticationEndpoint,
-            final String resourceManagerEndpoint,
-            final String graphEndpoint) {
+            final String tenant,
+            final String environmentStr,
+            final String managementEndpointUrl,
+            final String activeDirectoryEndpointUrl,
+            final String resourceManagerEndpointUrl,
+            final String graphEndpointUrl) {
         super(scope, id, description);
         data = new ServicePrincipal(
                 subscriptionId,
                 clientId,
                 clientSecret,
-                oauth2TokenEndpoint,
-                serviceManagementURL,
-                authenticationEndpoint,
-                resourceManagerEndpoint,
-                graphEndpoint);
+                tenant,
+                environmentStr,
+                managementEndpointUrl,
+                activeDirectoryEndpointUrl,
+                resourceManagerEndpointUrl,
+                graphEndpointUrl);
     }
 
     public static AzureCredentials.ServicePrincipal getServicePrincipal(
@@ -295,79 +328,77 @@ public class AzureCredentials extends BaseStandardCredentials {
     }
 
     public final String getClientSecret() {
-        return data.clientSecret.getEncryptedValue();
+        return data.clientSecret.getPlainText();
     }
 
-    public final String getOauth2TokenEndpoint() {
-        return data.oauth2TokenEndpoint.getPlainText();
+    public final String getTenant() {
+        return data.tenant.getPlainText();
     }
 
-    public final String getServiceManagementURL() {
-        return data.serviceManagementURL;
+    public final String getEnvironmentStr() {
+        return data.environmentStr;
     }
 
-    public final String getAuthenticationEndpoint() {
-        return data.authenticationEndpoint;
+    public final String getManagementEndpointUrl() {
+        return data.managementEndpointUrl;
     }
 
-    public final String getResourceManagerEndpoint() {
-        return data.resourceManagerEndpoint;
+    public final String getActiveDirectoryEndpointUrl() {
+        return data.activeDirectoryEndpointUrl;
     }
 
-    public final String getGraphEndpoint() {
-        return data.graphEndpoint;
+    public final String getResourceManagerEndpointUrl() {
+        return data.resourceManagerEndpointUrl;
+    }
 
+    public final String getGraphEndpointUrl() {
+        return data.graphEndpointUrl;
     }
 
     @Extension
     public static class DescriptorImpl
             extends BaseStandardCredentials.BaseStandardCredentialsDescriptor {
 
+        @Initializer(before = InitMilestone.PLUGINS_STARTED)
+        public static void upgradeAzureCredentialsConfig() {
+            try {
+                CredentialsMigration.upgradeAzureCredentialsConfig();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         @Override
         public final String getDisplayName() {
             return "Microsoft Azure Service Principal";
-        }
-
-        public final String getDefaultServiceManagementURL() {
-            return Constants.DEFAULT_MANAGEMENT_URL;
-        }
-
-        public final String getDefaultAuthenticationEndpoint() {
-            return Constants.DEFAULT_AUTHENTICATION_ENDPOINT;
-        }
-
-        public final String getDefaultResourceManagerEndpoint() {
-            return Constants.DEFAULT_RESOURCE_MANAGER_ENDPOINT;
-        }
-
-        public final String getDefaultGraphEndpoint() {
-            return Constants.DEFAULT_GRAPH_ENDPOINT;
-        }
-
-        public final String getDefaultOAuthPrefix() {
-            return Constants.DEFAULT_OAUTH_PREFIX;
         }
 
         public final FormValidation doVerifyConfiguration(
                 @QueryParameter final String subscriptionId,
                 @QueryParameter final String clientId,
                 @QueryParameter final String clientSecret,
-                @QueryParameter final String oauth2TokenEndpoint,
-                @QueryParameter final String serviceManagementURL,
-                @QueryParameter final String authenticationEndpoint,
-                @QueryParameter final String resourceManagerEndpoint,
-                @QueryParameter final String graphEndpoint) {
+                @QueryParameter final String tenant,
+                @QueryParameter final String environmentStr,
+                @QueryParameter final String managementEndpointUrl,
+                @QueryParameter final String activeDirectoryEndpointUrl,
+                @QueryParameter final String resourceManagerEndpointUrl,
+                @QueryParameter final String graphEndpointUrl) {
+
+            if (!ENVIRONMENT_MAP.containsKey(environmentStr)) {
+                return FormValidation.error("Invalid Azure Environment " + environmentStr);
+            }
 
             AzureCredentials.ServicePrincipal servicePrincipal
                     = new AzureCredentials.ServicePrincipal(
                     subscriptionId,
                     clientId,
                     clientSecret,
-                    oauth2TokenEndpoint,
-                    serviceManagementURL,
-                    authenticationEndpoint,
-                    resourceManagerEndpoint,
-                    graphEndpoint);
+                    tenant,
+                    environmentStr,
+                    managementEndpointUrl,
+                    activeDirectoryEndpointUrl,
+                    resourceManagerEndpointUrl,
+                    graphEndpointUrl);
             try {
                 servicePrincipal.validate();
             } catch (ValidationException e) {
@@ -377,5 +408,12 @@ public class AzureCredentials extends BaseStandardCredentials {
             return FormValidation.ok(Messages.Azure_Config_Success());
         }
 
+        public ListBoxModel doFillEnvironmentStrItems() {
+            ListBoxModel model = new ListBoxModel();
+            for (Map.Entry<String, Pair<String, AzureEnvironment>> entry : ENVIRONMENT_MAP.entrySet()) {
+                model.add(entry.getValue().getLeft(), entry.getKey());
+            }
+            return model;
+        }
     }
 }

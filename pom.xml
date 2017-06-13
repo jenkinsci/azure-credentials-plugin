@@ -8,7 +8,7 @@
     </parent>
 
     <artifactId>azure-credentials</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Azure Credentials</name>
     <description>Manage Azure Service Principal credentials using Jenkins Credentials API</description>
@@ -37,7 +37,8 @@
         <jenkins.version>1.625.3</jenkins.version>
         <java.level>7</java.level>
         <jenkins-test-harness.version>2.13</jenkins-test-harness.version>
-        <azuresdk.version>1.0.0-beta5</azuresdk.version>
+        <azuresdk.version>1.1.0</azuresdk.version>
+        <guava.version>22.0</guava.version>
     </properties>
 
     <licenses>
@@ -117,5 +118,24 @@
                 </executions>
             </plugin>
         </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.jenkins-ci.tools</groupId>
+                    <artifactId>maven-hpi-plugin</artifactId>
+                    <version>${hpi-plugin.version}</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                            <version>${guava.version}</version>
+                        </dependency>
+                    </dependencies>
+                    <configuration>
+                        <pluginFirstClassLoader>true</pluginFirstClassLoader>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 </project>
