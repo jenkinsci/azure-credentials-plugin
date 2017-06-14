@@ -58,6 +58,12 @@
             <groupId>com.microsoft.azure</groupId>
             <artifactId>azure</artifactId>
             <version>${azuresdk.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.microsoft.azure</groupId>
+                    <artifactId>azure-mgmt-compute</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
@@ -104,18 +110,17 @@
                     <execution>
                         <id>validate</id>
                         <phase>validate</phase>
-                        <configuration>
-                            <configLocation>checkstyle.xml</configLocation>
-                            <encoding>UTF-8</encoding>
-                            <consoleOutput>true</consoleOutput>
-                            <failsOnError>true</failsOnError>
-                            <linkXRef>false</linkXRef>
-                        </configuration>
                         <goals>
                             <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <encoding>UTF-8</encoding>
+                    <consoleOutput>true</consoleOutput>
+                    <failsOnError>true</failsOnError>
+                </configuration>
             </plugin>
         </plugins>
         <pluginManagement>

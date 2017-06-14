@@ -36,10 +36,14 @@ public class AzureCredentials extends BaseStandardCredentials {
     static final LinkedHashMap<String, Pair<String, AzureEnvironment>> ENVIRONMENT_MAP = new LinkedHashMap<>();
 
     static {
-        ENVIRONMENT_MAP.put("AZURE", Pair.of("Azure", AzureEnvironment.AZURE));
-        ENVIRONMENT_MAP.put("AZURE_CHINA", Pair.of("Azure China", AzureEnvironment.AZURE_CHINA));
-        ENVIRONMENT_MAP.put("AZURE_GERMANY", Pair.of("Azure Germany", AzureEnvironment.AZURE_GERMANY));
-        ENVIRONMENT_MAP.put("AZURE_US_GOVERNMENT", Pair.of("Azure US Government", AzureEnvironment.AZURE_US_GOVERNMENT));
+        ENVIRONMENT_MAP.put("AZURE",
+                Pair.of("Azure", AzureEnvironment.AZURE));
+        ENVIRONMENT_MAP.put("AZURE_CHINA",
+                Pair.of("Azure China", AzureEnvironment.AZURE_CHINA));
+        ENVIRONMENT_MAP.put("AZURE_GERMANY",
+                Pair.of("Azure Germany", AzureEnvironment.AZURE_GERMANY));
+        ENVIRONMENT_MAP.put("AZURE_US_GOVERNMENT",
+                Pair.of("Azure US Government", AzureEnvironment.AZURE_US_GOVERNMENT));
     }
 
     static final String DEFAULT_ENVIRONMENT = "AZURE";
@@ -100,7 +104,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        public String getEnvironmentStr() {
+        public final String getEnvironmentStr() {
             if (environmentStr == null) {
                 return "";
             } else {
@@ -108,7 +112,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        public String getManagementEndpointUrl() {
+        public final String getManagementEndpointUrl() {
             if (managementEndpointUrl == null) {
                 return "";
             } else {
@@ -116,7 +120,20 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        public String getActiveDirectoryEndpointUrl() {
+        /**
+         * Previously used to provide a parameter to construct the AzureEnvironment.
+         *
+         * @deprecated Call {@link #getAzureEnvironment()}.
+         * @return the management endpoint URL
+         */
+        public final String getServiceManagementURL() {
+            if (StringUtils.isNotBlank(managementEndpointUrl)) {
+                return managementEndpointUrl;
+            }
+            return ensureTrailingSlash(getAzureEnvironment().managementEndpoint());
+        }
+
+        public final String getActiveDirectoryEndpointUrl() {
             if (activeDirectoryEndpointUrl == null) {
                 return "";
             } else {
@@ -124,7 +141,20 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        public String getResourceManagerEndpointUrl() {
+        /**
+         * Previously used to provide a parameter to construct the AzureEnvironment.
+         *
+         * @deprecated Call {@link #getAzureEnvironment()}.
+         * @return the Active Directory endpoint URL
+         */
+        public final String getAuthenticationEndpoint() {
+            if (StringUtils.isNotBlank(activeDirectoryEndpointUrl)) {
+                return activeDirectoryEndpointUrl;
+            }
+            return ensureTrailingSlash(getAzureEnvironment().activeDirectoryEndpoint());
+        }
+
+        public final String getResourceManagerEndpointUrl() {
             if (resourceManagerEndpointUrl == null) {
                 return "";
             } else {
@@ -132,15 +162,41 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        public String getGraphEndpointUrl() {
-            if (activeDirectoryEndpointUrl == null) {
+        /**
+         * Previously used to provide a parameter to construct the AzureEnvironment.
+         *
+         * @deprecated Call {@link #getAzureEnvironment()}.
+         * @return the Resource Manager endpoint URL
+         */
+        public final String getResourceManagerEndpoint() {
+            if (StringUtils.isNotBlank(resourceManagerEndpointUrl)) {
+                return resourceManagerEndpointUrl;
+            }
+            return ensureTrailingSlash(getAzureEnvironment().resourceManagerEndpoint());
+        }
+
+        public final String getGraphEndpointUrl() {
+            if (graphEndpointUrl == null) {
                 return "";
             } else {
                 return graphEndpointUrl;
             }
         }
 
-        public AzureEnvironment getAzureEnvironment() {
+        /**
+         * Previously used to provide a parameter to construct the AzureEnvironment.
+         *
+         * @deprecated Call {@link #getAzureEnvironment()}.
+         * @return the graph endpoint URL
+         */
+        public final String getGraphEndpoint() {
+            if (StringUtils.isNotBlank(graphEndpointUrl)) {
+                return graphEndpointUrl;
+            }
+            return ensureTrailingSlash(getAzureEnvironment().graphEndpoint());
+        }
+
+        public final AzureEnvironment getAzureEnvironment() {
             if (azureEnvironment != null) {
                 return azureEnvironment;
             }
@@ -207,7 +263,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             this.clientId = Secret.fromString("");
             this.clientSecret = Secret.fromString("");
             this.tenant = Secret.fromString("");
-            this.environmentStr = "AZURE";
+            this.environmentStr = DEFAULT_ENVIRONMENT;
             this.managementEndpointUrl = "";
             this.activeDirectoryEndpointUrl = "";
             this.resourceManagerEndpointUrl = "";
@@ -233,8 +289,10 @@ public class AzureCredentials extends BaseStandardCredentials {
                 throw new ValidationException(Messages.Azure_ClientSecret_Missing());
             }
             if (StringUtils.isBlank(tenant.getPlainText())) {
-                // FIXME: error message
-                throw new ValidationException(Messages.Azure_OAuthToken_Missing());
+                throw new ValidationException(Messages.Azure_Tenant_Missing());
+            }
+            if (!ENVIRONMENT_MAP.containsKey(environmentStr)) {
+                throw new ValidationException(Messages.Azure_Invalid_Azure_Environment());
             }
 
             try {
@@ -273,6 +331,28 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
+        /**
+         * Add forward slash to the tail of the URL, if not exist.
+         *
+         * For backward compatibility. If we do not have trailing slash, we may encounter error on legacy Azure REST
+         * API.
+         *
+         * Sample error:
+         * <p>
+         *   The access token has been obtained from wrong audience or resource 'https://management.core.windows.net'.
+         *   It should exactly match (including forward slash) with one of the allowed audiences
+         *   'https://management.core.windows.net/','https://management.azure.com/'.
+         * </p>
+         */
+        private static String ensureTrailingSlash(String url) {
+            if (StringUtils.isEmpty(url)) {
+                return "/";
+            }
+            if (url.charAt(url.length() - 1) != '/') {
+                return url + '/';
+            }
+            return url;
+        }
     }
 
     private final ServicePrincipal data;
@@ -408,7 +488,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             return FormValidation.ok(Messages.Azure_Config_Success());
         }
 
-        public ListBoxModel doFillEnvironmentStrItems() {
+        public final ListBoxModel doFillEnvironmentStrItems() {
             ListBoxModel model = new ListBoxModel();
             for (Map.Entry<String, Pair<String, AzureEnvironment>> entry : ENVIRONMENT_MAP.entrySet()) {
                 model.add(entry.getValue().getLeft(), entry.getKey());

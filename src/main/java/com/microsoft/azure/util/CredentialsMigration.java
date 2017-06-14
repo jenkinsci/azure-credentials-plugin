@@ -39,7 +39,8 @@ public final class CredentialsMigration {
 
     private static final String CREDENTIALS_FILE = "credentials.xml";
 
-    private static Map<String, AzureCredentials> convertAzureCredentials(final File inputFile) throws SAXException, IOException, ParserConfigurationException {
+    private static Map<String, AzureCredentials> convertAzureCredentials(final File inputFile)
+            throws SAXException, IOException, ParserConfigurationException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
 
@@ -69,13 +70,18 @@ public final class CredentialsMigration {
             String subscriptionId = getNodeValue(elem, "data.subscriptionId", true);
             String clientId = getNodeValue(elem, "data.clientId", true);
             String clientSecret = getNodeValue(elem, "data.clientSecret", true);
-            String tenant = AzureCredentials.ServicePrincipal.getTenantFromTokenEndpoint(getNodeValue(elem, "data.oauth2TokenEndpoint", true));
+            String tenant = AzureCredentials.ServicePrincipal.getTenantFromTokenEndpoint(
+                    getNodeValue(elem, "data.oauth2TokenEndpoint", true));
             String managementEndpointUrl = getNodeValue(elem, "data.serviceManagementURL");
             String activeDirectoryEndpointUrl = getNodeValue(elem, "data.authenticationEndpoint");
             String resourceManagerEndpointUrl = getNodeValue(elem, "data.resourceManagerEndpoint");
             String graphEndpointUrl = getNodeValue(elem, "data.graphEndpoint");
 
-            String environmentStr = resolveEnvironment(managementEndpointUrl, activeDirectoryEndpointUrl, resourceManagerEndpointUrl, graphEndpointUrl);
+            String environmentStr = resolveEnvironment(
+                    managementEndpointUrl,
+                    activeDirectoryEndpointUrl,
+                    resourceManagerEndpointUrl,
+                    graphEndpointUrl);
             if (environmentStr != null) {
                 managementEndpointUrl = "";
                 activeDirectoryEndpointUrl = "";
@@ -114,7 +120,11 @@ public final class CredentialsMigration {
                 return;
             }
 
-            List<AzureCredentials> legacyCredentials = CredentialsProvider.lookupCredentials(AzureCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+            List<AzureCredentials> legacyCredentials = CredentialsProvider.lookupCredentials(
+                    AzureCredentials.class,
+                    Jenkins.getInstance(),
+                    ACL.SYSTEM,
+                    Collections.<DomainRequirement>emptyList());
 
             final SecurityContext securityContext = ACL.impersonate(ACL.SYSTEM);
             try {
@@ -142,6 +152,14 @@ public final class CredentialsMigration {
         }
     }
 
+    /**
+     * In the earlier version (1.1), the AzureEnvironment is provided by constructing a new instance with the four
+     * URL's filled from the credentials configuration form.
+     *
+     * In the migration, we check if the four URL's match any of the existing environments. If yes, we return that
+     * environment and clear all the overrides. Otherwise, we choose Azure global as the default environment, and
+     * apply the URL's from earlier version as explicit overrides.
+     */
     private static String resolveEnvironment(
             final String managementEndpointUrl,
             final String activeDirectoryEndpointUrl,
@@ -159,17 +177,19 @@ public final class CredentialsMigration {
         return null;
     }
 
-    private static boolean sameUrl(String base, String target) {
+    private static boolean sameUrl(final String base, final String target) {
         if (StringUtils.isBlank(target)) {
             return false;
         }
+        String enrichedBase = base;
         if (!base.endsWith("/")) {
-            base = base + '/';
+            enrichedBase = base + '/';
         }
+        String enrichedTarget = target;
         if (!target.endsWith("/")) {
-            target = target + '/';
+            enrichedTarget = target + '/';
         }
-        return base.equals(target);
+        return enrichedBase.equals(enrichedTarget);
     }
 
     private static String getWorkDirectory() {
@@ -180,17 +200,17 @@ public final class CredentialsMigration {
         }
 
         return jenkinsRoot.getAbsolutePath();
-
     }
 
-    private static String getNodeValue(Element elem, String path) {
+    private static String getNodeValue(final Element elem, final String path) {
         return getNodeValue(elem, path, false);
     }
 
-    private static String getNodeValue(Element elem, String path, boolean isSecret) {
+    private static String getNodeValue(final Element elem, final String path, final boolean isSecret) {
         String[] parts = path.split("\\.");
-        for (int i = 0; elem != null && i < parts.length; ++i) {
-            NodeList list = elem.getElementsByTagName(parts[i]);
+        Element current = elem;
+        for (int i = 0; current != null && i < parts.length; ++i) {
+            NodeList list = current.getElementsByTagName(parts[i]);
             if (list.getLength() <= 0) {
                 return "";
             }
@@ -198,9 +218,9 @@ public final class CredentialsMigration {
             if (node.getNodeType() != Node.ELEMENT_NODE) {
                 return "";
             }
-            elem = (Element) node;
+            current = (Element) node;
         }
-        String value = elem.getChildNodes().item(0).getNodeValue();
+        String value = current.getChildNodes().item(0).getNodeValue();
         if (!isSecret) {
             return value;
         }

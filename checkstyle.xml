@@ -20,9 +20,11 @@
 
     <!-- Checks whether files end with a new line.                        -->
     <!-- See http://checkstyle.sf.net/config_misc.html#NewlineAtEndOfFile -->
+    <!--
     <module name="NewlineAtEndOfFile">
         <property name="lineSeparator" value="lf" />
     </module>
+    -->
 
     <!-- Checks that property files contain the same keys.         -->
     <!-- See http://checkstyle.sf.net/config_misc.html#Translation -->
@@ -77,9 +79,9 @@
 
         <!-- Checks for Size Violations.                    -->
         <!-- See http://checkstyle.sf.net/config_sizes.html -->
-        <!--<module name="LineLength">-->
-          <!--<property name="max" value="100"/>-->
-        <!--</module>-->
+        <module name="LineLength">
+          <property name="max" value="120"/>
+        </module>
         <module name="MethodLength"/>
         <module name="ParameterNumber">
           <property name="max" value="10"/>
@@ -130,7 +132,7 @@
 
         <!-- Checks for class design                         -->
         <!-- See http://checkstyle.sf.net/config_design.html -->
-        <!-- <module name="DesignForExtension"/> -->
+        <module name="DesignForExtension"/>
         <module name="FinalClass"/>
         <module name="HideUtilityClassConstructor"/>
         <module name="InterfaceIsType"/>
@@ -139,7 +141,7 @@
         <!-- Miscellaneous other checks.                   -->
         <!-- See http://checkstyle.sf.net/config_misc.html -->
         <module name="ArrayTypeStyle"/>
-        <!-- <module name="FinalParameters"/> -->
+        <module name="FinalParameters"/>
         <module name="TodoComment"/>
         <module name="UpperEll"/>
         <module name="FileContentsHolder"/>
