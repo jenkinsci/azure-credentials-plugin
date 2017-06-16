@@ -1,7 +1,6 @@
 /**
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for
- * license information.
+ * Licensed under the MIT License. See LICENSE file in the project root for license information.
  */
 package com.microsoft.azure.util;
 
@@ -296,6 +295,14 @@ public class AzureCredentials extends BaseStandardCredentials {
 
     public final String getClientSecret() {
         return data.clientSecret.getEncryptedValue();
+    }
+
+    public final String getPlainClientSecret() {
+        return data.clientSecret.getPlainText();
+    }
+
+    public final String getTenant() {
+        return data.getTenant();
     }
 
     public final String getOauth2TokenEndpoint() {

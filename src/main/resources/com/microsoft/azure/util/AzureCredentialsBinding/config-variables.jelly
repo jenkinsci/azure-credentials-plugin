@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Microsoft Corporation. All rights reserved.
+    Licensed under the MIT License. See LICENSE file in the project root for license information.
+-->
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler" xmlns:c="/lib/credentials">
+    <f:entry title="${%SubscriptionIdVariable}" field="subscriptionIdVariable" help="/plugin/azure-credentials/help-subscriptionIdVariable.html">
+        <f:textbox default="${descriptor.getDefaultSubscriptionIdVariable()}"/>
+    </f:entry>
+    <f:entry title="${%ClientIdVariable}" field="clientIdVariable" help="/plugin/azure-credentials/help-clientIdVariable.html">
+        <f:textbox default="${descriptor.getDefaultClientIdVariable()}"/>
+    </f:entry>
+    <f:entry title="${%ClientSecretVariable}" field="clientSecretVariable" help="/plugin/azure-credentials/help-clientSecretVariable.html">
+        <f:textbox default="${descriptor.getDefaultClientSecretVariable()}"/>
+    </f:entry>
+    <f:entry title="${%TenantIdVariable}" field="tenantIdVariable" help="/plugin/azure-credentials/help-tenantIdVariable.html">
+        <f:textbox default="${descriptor.getDefaultTenantIdVariable()}"/>
+    </f:entry>
+</j:jelly>
