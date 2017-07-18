@@ -37,6 +37,7 @@
         <java.level>7</java.level>
         <jenkins-test-harness.version>2.13</jenkins-test-harness.version>
         <azuresdk.version>1.0.0-beta5</azuresdk.version>
+        <azure-keyvault.version>1.0.0</azure-keyvault.version>
     </properties>
 
     <licenses>
@@ -50,12 +51,22 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
-            <version>1.21</version>
+            <version>2.1.14</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>plain-credentials</artifactId>
+            <version>1.4</version>
         </dependency>
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>azure</artifactId>
             <version>${azuresdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-keyvault</artifactId>
+            <version>${azure-keyvault.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
@@ -67,6 +78,11 @@
                 </exclusion>
             </exclusions>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>20.0</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -104,6 +120,18 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.jenkins-ci.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
+                <configuration>
+                    <pluginFirstClassLoader>true</pluginFirstClassLoader>
+                    <maskClasses>
+                        com.microsoft.azure.credentials.
+                        com.microsoft.azure.management.
+                        com.google.common.
+                    </maskClasses>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>2.17</version>
@@ -116,7 +144,7 @@
                             <encoding>UTF-8</encoding>
                             <consoleOutput>true</consoleOutput>
                             <failsOnError>true</failsOnError>
-                            <linkXRef>false</linkXRef>
+                            <resourceIncludes>**/*.properties,**/*.jelly,**/*.html</resourceIncludes>
                         </configuration>
                         <goals>
                             <goal>check</goal>
