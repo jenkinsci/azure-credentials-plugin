@@ -7,9 +7,11 @@ package com.microsoft.jenkins.keyvault;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.microsoft.azure.keyvault.models.SecretBundle;
 import hudson.Extension;
+import hudson.util.FormValidation;
 import hudson.util.Secret;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
 
@@ -36,7 +38,23 @@ public class SecretStringCredentials extends BaseSecretCredentials implements St
 
         @Override
         public String getDisplayName() {
-            return Messages.Azure_KeyVault_Secret_String_Credentials_Diaplay_Name();
+            return Messages.String_Credentials_Diaplay_Name();
+        }
+
+        public final FormValidation doVerifyConfiguration(
+                @QueryParameter final String servicePrincipalId,
+                @QueryParameter final String secretIdentifier) {
+
+            final SecretStringCredentials credentials = new SecretStringCredentials(
+                    CredentialsScope.SYSTEM, "", "", servicePrincipalId, secretIdentifier);
+
+            try {
+                credentials.getSecret();
+            } catch (Exception e) {
+                return FormValidation.error(e.getMessage());
+            }
+
+            return FormValidation.ok(Messages.String_Credentials_Validation_OK());
         }
 
     }

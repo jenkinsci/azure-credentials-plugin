@@ -7,6 +7,7 @@ package com.microsoft.jenkins.keyvault;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.microsoft.azure.keyvault.models.SecretBundle;
+import hudson.util.FormValidation;
 import hudson.util.Secret;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -43,6 +44,14 @@ public class SecretStringCredentialsTest {
 
         final Secret secret = c.getSecret();
         Assert.assertEquals("Secret", secret.getPlainText());
+    }
+
+    @Test
+    public void descriptorVerifyConfiguration() {
+        final SecretStringCredentials.DescriptorImpl descriptor = new SecretStringCredentials.DescriptorImpl();
+
+        FormValidation result = descriptor.doVerifyConfiguration("", "");
+        Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
     }
 
 }

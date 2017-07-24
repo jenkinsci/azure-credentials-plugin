@@ -7,6 +7,7 @@ package com.microsoft.jenkins.keyvault;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.microsoft.azure.keyvault.models.SecretBundle;
+import hudson.util.FormValidation;
 import hudson.util.Secret;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
@@ -66,6 +67,14 @@ public class SecretCertificateCredentialsTest {
         Assert.assertEquals(1, keyStore.size());
         final Key key = keyStore.getKey("msft", "123456".toCharArray());
         Assert.assertEquals("RSA", key.getAlgorithm());
+    }
+
+    @Test
+    public void descriptorVerifyConfiguration() {
+        final SecretCertificateCredentials.DescriptorImpl descriptor = new SecretCertificateCredentials.DescriptorImpl();
+
+        FormValidation result = descriptor.doVerifyConfiguration("", "", Secret.fromString(""));
+        Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
     }
 
 }
