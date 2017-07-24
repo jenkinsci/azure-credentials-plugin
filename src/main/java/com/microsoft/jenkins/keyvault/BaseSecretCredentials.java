@@ -18,6 +18,8 @@ import hudson.util.ListBoxModel;
 
 public class BaseSecretCredentials extends BaseStandardCredentials {
 
+    private static final long serialVersionUID = 1L;
+
     private transient SecretGetter secretGetter;
     protected final String servicePrincipalId;
     protected final String secretIdentifier;
