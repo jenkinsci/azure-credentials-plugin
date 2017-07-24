@@ -17,6 +17,8 @@ import javax.annotation.Nonnull;
 
 public class SecretStringCredentials extends BaseSecretCredentials implements StringCredentials {
 
+    private static final long serialVersionUID = 1L;
+
     @DataBoundConstructor
     public SecretStringCredentials(final CredentialsScope scope,
                                    final String id,
