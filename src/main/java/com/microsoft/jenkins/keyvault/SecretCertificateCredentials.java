@@ -1,0 +1,102 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See LICENSE file in the project root for license information.
+ */
+package com.microsoft.jenkins.keyvault;
+
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
+import com.microsoft.azure.keyvault.models.SecretBundle;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.Extension;
+import hudson.Util;
+import hudson.util.Secret;
+import org.apache.commons.net.util.Base64;
+import org.kohsuke.stapler.DataBoundConstructor;
+
+import javax.annotation.CheckForNull;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+
+public class SecretCertificateCredentials extends BaseSecretCredentials
+        implements StandardCertificateCredentials {
+
+    private static final Logger LOGGER = Logger.getLogger(SecretCertificateCredentials.class.getName());
+
+    private final Secret password;
+
+    @DataBoundConstructor
+    public SecretCertificateCredentials(final CredentialsScope scope,
+                                        final String id,
+                                        final String description,
+                                        final String servicePrincipalId,
+                                        final String secretIdentifier,
+                                        final Secret password) {
+        super(scope, id, description, servicePrincipalId, secretIdentifier);
+        this.password = password;
+    }
+
+    @NonNull
+    @Override
+    public Secret getPassword() {
+        return password;
+    }
+
+    /**
+     * Helper to convert a {@link Secret} password into a {@code char[]}
+     *
+     * @param password the password.
+     * @return a {@code char[]} containing the password or {@code null}
+     */
+    @CheckForNull
+    private static char[] toCharArray(@NonNull final Secret password) {
+        String plainText = Util.fixEmpty(password.getPlainText());
+        if (plainText == null) {
+            return null;
+        } else {
+            return plainText.toCharArray();
+        }
+    }
+
+    @NonNull
+    @Override
+    public KeyStore getKeyStore() {
+        final SecretBundle secretBundle = getKeyVaultSecret();
+
+        KeyStore keyStore;
+        try {
+            keyStore = KeyStore.getInstance("PKCS12");
+        } catch (KeyStoreException e) {
+            throw new IllegalStateException("PKCS12 is a keystore type per the JLS spec", e);
+        }
+
+        try {
+            final byte[] content = Base64.decodeBase64(secretBundle.value());
+            keyStore.load(new ByteArrayInputStream(content), toCharArray(password));
+        } catch (CertificateException | NoSuchAlgorithmException | IOException e) {
+            final LogRecord lr = new LogRecord(Level.WARNING, "Credentials ID {0}: Could not load keystore from {1}");
+            lr.setParameters(new Object[]{getId(), secretIdentifier});
+            lr.setThrown(e);
+            LOGGER.log(lr);
+        }
+
+        return keyStore;
+    }
+
+    @Extension
+    public static class DescriptorImpl extends BaseSecretCredentials.DescriptorImpl {
+
+        @Override
+        public String getDisplayName() {
+            return Messages.Azure_KeyVault_Secret_Certificate_Credentials_Diaplay_Name();
+        }
+
+    }
+}
