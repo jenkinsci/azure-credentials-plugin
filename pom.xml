@@ -94,6 +94,11 @@
             <artifactId>structs</artifactId>
             <version>1.5</version>
         </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>jenkins-test-harness</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
