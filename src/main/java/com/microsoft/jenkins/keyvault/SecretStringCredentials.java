@@ -51,7 +51,11 @@ public class SecretStringCredentials extends BaseSecretCredentials implements St
             try {
                 credentials.getSecret();
             } catch (Exception e) {
-                return FormValidation.error(e.getMessage());
+                String message = e.getMessage();
+                if (message == null) {
+                    message = Messages.String_Credentials_Validation_Invalid();
+                }
+                return FormValidation.error(message);
             }
 
             return FormValidation.ok(Messages.String_Credentials_Validation_OK());

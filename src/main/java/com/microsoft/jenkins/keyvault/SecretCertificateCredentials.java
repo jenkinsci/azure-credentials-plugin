@@ -98,7 +98,7 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
 
         @Override
         public String getDisplayName() {
-            return Messages.Certificate_Credentials_Diaplay_Name();
+            return Messages.Certificate_Credentials_Display_Name();
         }
 
         public final FormValidation doVerifyConfiguration(
@@ -113,7 +113,11 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
             try {
                 keyStore = credentials.getKeyStore();
             } catch (Exception e) {
-                return FormValidation.error(e.getMessage());
+                String message = e.getMessage();
+                if (message == null) {
+                    message = Messages.Certificate_Credentials_Validation_Invalid();
+                }
+                return FormValidation.error(message);
             }
 
             try {
