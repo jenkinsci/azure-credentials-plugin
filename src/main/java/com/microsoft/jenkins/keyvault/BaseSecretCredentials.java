@@ -21,14 +21,14 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
     private static final long serialVersionUID = 1L;
 
     private transient SecretGetter secretGetter;
-    protected final String servicePrincipalId;
-    protected final String secretIdentifier;
+    private final String servicePrincipalId;
+    private final String secretIdentifier;
 
-    public BaseSecretCredentials(final CredentialsScope scope,
-                                 final String id,
-                                 final String description,
-                                 final String servicePrincipalId,
-                                 final String secretIdentifier) {
+    public BaseSecretCredentials(CredentialsScope scope,
+                                 String id,
+                                 String description,
+                                 String servicePrincipalId,
+                                 String secretIdentifier) {
         super(scope, id, description);
         this.secretGetter = SecretGetter.DEFAULT;
         this.servicePrincipalId = servicePrincipalId;
@@ -51,17 +51,17 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
     }
 
     @VisibleForTesting
-    void setSecretGetter(final SecretGetter secretGetter) {
+    void setSecretGetter(SecretGetter secretGetter) {
         this.secretGetter = secretGetter;
     }
 
     interface SecretGetter {
-        SecretBundle getKeyVaultSecret(final String aServicePrincipalId, final String aSecretIdentifier);
+        SecretBundle getKeyVaultSecret(String aServicePrincipalId, String aSecretIdentifier);
 
         SecretGetter DEFAULT = new SecretGetter() {
 
             @Override
-            public SecretBundle getKeyVaultSecret(final String aServicePrincipalId, final String aSecretIdentifier) {
+            public SecretBundle getKeyVaultSecret(String aServicePrincipalId, String aSecretIdentifier) {
                 final AzureCredentials.ServicePrincipal servicePrincipal =
                         AzureCredentials.getServicePrincipal(aServicePrincipalId);
 
@@ -75,7 +75,7 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
 
     protected abstract static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
 
-        public ListBoxModel doFillServicePrincipalIdItems(final Item owner) {
+        public ListBoxModel doFillServicePrincipalIdItems(Item owner) {
             return new StandardListBoxModel()
                     .includeEmptyValue()
                     .includeAs(ACL.SYSTEM, owner, AzureCredentials.class);

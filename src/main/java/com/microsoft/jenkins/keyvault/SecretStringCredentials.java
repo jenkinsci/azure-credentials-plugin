@@ -20,11 +20,11 @@ public class SecretStringCredentials extends BaseSecretCredentials implements St
     private static final long serialVersionUID = 1L;
 
     @DataBoundConstructor
-    public SecretStringCredentials(final CredentialsScope scope,
-                                   final String id,
-                                   final String description,
-                                   final String servicePrincipalId,
-                                   final String secretIdentifier) {
+    public SecretStringCredentials(CredentialsScope scope,
+                                   String id,
+                                   String description,
+                                   String servicePrincipalId,
+                                   String secretIdentifier) {
         super(scope, id, description, servicePrincipalId, secretIdentifier);
     }
 
@@ -43,9 +43,9 @@ public class SecretStringCredentials extends BaseSecretCredentials implements St
             return Messages.String_Credentials_Diaplay_Name();
         }
 
-        public final FormValidation doVerifyConfiguration(
-                @QueryParameter final String servicePrincipalId,
-                @QueryParameter final String secretIdentifier) {
+        public FormValidation doVerifyConfiguration(
+                @QueryParameter String servicePrincipalId,
+                @QueryParameter String secretIdentifier) {
 
             final SecretStringCredentials credentials = new SecretStringCredentials(
                     CredentialsScope.SYSTEM, "", "", servicePrincipalId, secretIdentifier);
