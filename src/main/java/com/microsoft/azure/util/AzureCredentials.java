@@ -1,7 +1,6 @@
 /**
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for
- * license information.
+ * Licensed under the MIT License. See LICENSE file in the project root for license information.
  */
 package com.microsoft.azure.util;
 
@@ -43,6 +42,8 @@ public class AzureCredentials extends BaseStandardCredentials {
                 = "https://management.azure.com/";
         public static final String DEFAULT_GRAPH_ENDPOINT
                 = "https://graph.windows.net/";
+        public static final String DEFAULT_OAUTH_PREFIX
+                = "https://login.windows.net/<TenantId>";
     }
 
     public static class ServicePrincipal implements java.io.Serializable {
@@ -285,19 +286,27 @@ public class AzureCredentials extends BaseStandardCredentials {
     }
 
     public final String getSubscriptionId() {
-        return data.subscriptionId.getEncryptedValue();
+        return data.subscriptionId.getPlainText();
     }
 
     public final String getClientId() {
-        return data.clientId.getEncryptedValue();
+        return data.clientId.getPlainText();
     }
 
     public final String getClientSecret() {
         return data.clientSecret.getEncryptedValue();
     }
 
+    public final String getPlainClientSecret() {
+        return data.clientSecret.getPlainText();
+    }
+
+    public final String getTenant() {
+        return data.getTenant();
+    }
+
     public final String getOauth2TokenEndpoint() {
-        return data.oauth2TokenEndpoint.getEncryptedValue();
+        return data.oauth2TokenEndpoint.getPlainText();
     }
 
     public final String getServiceManagementURL() {
@@ -340,6 +349,10 @@ public class AzureCredentials extends BaseStandardCredentials {
 
         public final String getDefaultGraphEndpoint() {
             return Constants.DEFAULT_GRAPH_ENDPOINT;
+        }
+
+        public final String getDefaultOAuthPrefix() {
+            return Constants.DEFAULT_OAUTH_PREFIX;
         }
 
         public final FormValidation doVerifyConfiguration(
