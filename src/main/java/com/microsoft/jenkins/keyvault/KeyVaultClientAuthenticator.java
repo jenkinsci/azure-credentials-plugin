@@ -18,20 +18,20 @@ public class KeyVaultClientAuthenticator extends KeyVaultCredentials {
     private final String clientId;
     private final String clientSecret;
 
-    public KeyVaultClientAuthenticator(final String clientId, final String clientSecret) {
+    public KeyVaultClientAuthenticator(String clientId, String clientSecret) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
     }
 
     @Override
-    public String doAuthenticate(final String authorization, final String resource, final String scope) {
+    public String doAuthenticate(String authorization, String resource, String scope) {
         final AuthenticationResult token = getAccessTokenFromClientCredentials(
                 authorization, resource);
         return token.getAccessToken();
     }
 
-    private AuthenticationResult getAccessTokenFromClientCredentials(final String authorization,
-                                                                     final String resource) {
+    private AuthenticationResult getAccessTokenFromClientCredentials(String authorization,
+                                                                     String resource) {
         AuthenticationContext context = null;
         AuthenticationResult result = null;
         ExecutorService service = null;

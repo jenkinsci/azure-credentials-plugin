@@ -27,7 +27,7 @@ import java.util.Collections;
 public class AzureCredentials extends BaseStandardCredentials {
     public static class ValidationException extends Exception {
 
-        public ValidationException(final String message) {
+        public ValidationException(String message) {
             super(message);
         }
     }
@@ -58,7 +58,7 @@ public class AzureCredentials extends BaseStandardCredentials {
         private final String resourceManagerEndpoint;
         private final String graphEndpoint;
 
-        public final String getSubscriptionId() {
+        public String getSubscriptionId() {
             if (subscriptionId == null) {
                 return "";
             } else {
@@ -66,7 +66,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        public final String getClientId() {
+        public String getClientId() {
             if (clientId == null) {
                 return "";
             } else {
@@ -74,7 +74,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        public final String getClientSecret() {
+        public String getClientSecret() {
             if (clientSecret == null) {
                 return "";
             } else {
@@ -82,7 +82,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        public final String getTenant() {
+        public String getTenant() {
             if (tenant == null || StringUtils.isBlank(tenant.getPlainText())) {
                 if (oauth2TokenEndpoint != null) {
                     return ServicePrincipal.getTenantFromTokenEndpoint(
@@ -95,7 +95,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        public final String getServiceManagementURL() {
+        public String getServiceManagementURL() {
             if (serviceManagementURL == null) {
                 return Constants.DEFAULT_MANAGEMENT_URL;
             } else {
@@ -103,7 +103,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        public final String getAuthenticationEndpoint() {
+        public String getAuthenticationEndpoint() {
             if (authenticationEndpoint == null) {
                 return Constants.DEFAULT_AUTHENTICATION_ENDPOINT;
             } else {
@@ -111,7 +111,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        public final String getResourceManagerEndpoint() {
+        public String getResourceManagerEndpoint() {
             if (resourceManagerEndpoint == null) {
                 return Constants.DEFAULT_RESOURCE_MANAGER_ENDPOINT;
             } else {
@@ -119,7 +119,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        public final String getGraphEndpoint() {
+        public String getGraphEndpoint() {
             if (graphEndpoint == null) {
                 return Constants.DEFAULT_GRAPH_ENDPOINT;
             } else {
@@ -128,14 +128,14 @@ public class AzureCredentials extends BaseStandardCredentials {
         }
 
         public ServicePrincipal(
-                final String subscriptionId,
-                final String clientId,
-                final String clientSecret,
-                final String oauth2TokenEndpoint,
-                final String serviceManagementURL,
-                final String authenticationEndpoint,
-                final String resourceManagerEndpoint,
-                final String graphEndpoint) {
+                String subscriptionId,
+                String clientId,
+                String clientSecret,
+                String oauth2TokenEndpoint,
+                String serviceManagementURL,
+                String authenticationEndpoint,
+                String resourceManagerEndpoint,
+                String graphEndpoint) {
             this.subscriptionId = Secret.fromString(subscriptionId);
             this.clientId = Secret.fromString(clientId);
             this.clientSecret = Secret.fromString(clientSecret);
@@ -177,14 +177,14 @@ public class AzureCredentials extends BaseStandardCredentials {
             this.graphEndpoint = Constants.DEFAULT_GRAPH_ENDPOINT;
         }
 
-        public final boolean isBlank() {
+        public boolean isBlank() {
             return StringUtils.isBlank(subscriptionId.getPlainText())
                     || StringUtils.isBlank(clientId.getPlainText())
                     || StringUtils.isBlank(oauth2TokenEndpoint.getPlainText())
                     || StringUtils.isBlank(clientSecret.getPlainText());
         }
 
-        public final boolean validate() throws ValidationException {
+        public boolean validate() throws ValidationException {
             if (StringUtils.isBlank(subscriptionId.getPlainText())) {
                 throw new ValidationException(Messages.Azure_SubscriptionID_Missing());
             }
@@ -227,12 +227,12 @@ public class AzureCredentials extends BaseStandardCredentials {
 
         private static final int TOKEN_ENDPOINT_URL_ENDPOINT_POSTION = 3;
 
-        private static String getTenantFromTokenEndpoint(final String oauth2TokenEndpoint) {
+        private static String getTenantFromTokenEndpoint(String oauth2TokenEndpoint) {
             if (!oauth2TokenEndpoint.matches(
                     "https{0,1}://[a-zA-Z0-9\\.]*/[a-z0-9\\-]*/?.*$")) {
                 return "";
             } else {
-                final String[] parts = oauth2TokenEndpoint.split("/");
+                String[] parts = oauth2TokenEndpoint.split("/");
                 if (parts.length < TOKEN_ENDPOINT_URL_ENDPOINT_POSTION + 1) {
                     return "";
                 } else {
@@ -247,17 +247,17 @@ public class AzureCredentials extends BaseStandardCredentials {
 
     @DataBoundConstructor
     public AzureCredentials(
-            final CredentialsScope scope,
-            final String id,
-            final String description,
-            final String subscriptionId,
-            final String clientId,
-            final String clientSecret,
-            final String oauth2TokenEndpoint,
-            final String serviceManagementURL,
-            final String authenticationEndpoint,
-            final String resourceManagerEndpoint,
-            final String graphEndpoint) {
+            CredentialsScope scope,
+            String id,
+            String description,
+            String subscriptionId,
+            String clientId,
+            String clientSecret,
+            String oauth2TokenEndpoint,
+            String serviceManagementURL,
+            String authenticationEndpoint,
+            String resourceManagerEndpoint,
+            String graphEndpoint) {
         super(scope, id, description);
         data = new ServicePrincipal(
                 subscriptionId,
@@ -271,7 +271,7 @@ public class AzureCredentials extends BaseStandardCredentials {
     }
 
     public static AzureCredentials.ServicePrincipal getServicePrincipal(
-            final String credentialsId) {
+            String credentialsId) {
         AzureCredentials creds = CredentialsMatchers.firstOrNull(
                 CredentialsProvider.lookupCredentials(
                         AzureCredentials.class,
@@ -285,43 +285,43 @@ public class AzureCredentials extends BaseStandardCredentials {
         return creds.data;
     }
 
-    public final String getSubscriptionId() {
+    public String getSubscriptionId() {
         return data.subscriptionId.getPlainText();
     }
 
-    public final String getClientId() {
+    public String getClientId() {
         return data.clientId.getPlainText();
     }
 
-    public final String getClientSecret() {
+    public String getClientSecret() {
         return data.clientSecret.getEncryptedValue();
     }
 
-    public final String getPlainClientSecret() {
+    public String getPlainClientSecret() {
         return data.clientSecret.getPlainText();
     }
 
-    public final String getTenant() {
+    public String getTenant() {
         return data.getTenant();
     }
 
-    public final String getOauth2TokenEndpoint() {
+    public String getOauth2TokenEndpoint() {
         return data.oauth2TokenEndpoint.getPlainText();
     }
 
-    public final String getServiceManagementURL() {
+    public String getServiceManagementURL() {
         return data.serviceManagementURL;
     }
 
-    public final String getAuthenticationEndpoint() {
+    public String getAuthenticationEndpoint() {
         return data.authenticationEndpoint;
     }
 
-    public final String getResourceManagerEndpoint() {
+    public String getResourceManagerEndpoint() {
         return data.resourceManagerEndpoint;
     }
 
-    public final String getGraphEndpoint() {
+    public String getGraphEndpoint() {
         return data.graphEndpoint;
 
     }
@@ -331,39 +331,39 @@ public class AzureCredentials extends BaseStandardCredentials {
             extends BaseStandardCredentials.BaseStandardCredentialsDescriptor {
 
         @Override
-        public final String getDisplayName() {
+        public String getDisplayName() {
             return "Microsoft Azure Service Principal";
         }
 
-        public final String getDefaultServiceManagementURL() {
+        public String getDefaultServiceManagementURL() {
             return Constants.DEFAULT_MANAGEMENT_URL;
         }
 
-        public final String getDefaultAuthenticationEndpoint() {
+        public String getDefaultAuthenticationEndpoint() {
             return Constants.DEFAULT_AUTHENTICATION_ENDPOINT;
         }
 
-        public final String getDefaultResourceManagerEndpoint() {
+        public String getDefaultResourceManagerEndpoint() {
             return Constants.DEFAULT_RESOURCE_MANAGER_ENDPOINT;
         }
 
-        public final String getDefaultGraphEndpoint() {
+        public String getDefaultGraphEndpoint() {
             return Constants.DEFAULT_GRAPH_ENDPOINT;
         }
 
-        public final String getDefaultOAuthPrefix() {
+        public String getDefaultOAuthPrefix() {
             return Constants.DEFAULT_OAUTH_PREFIX;
         }
 
-        public final FormValidation doVerifyConfiguration(
-                @QueryParameter final String subscriptionId,
-                @QueryParameter final String clientId,
-                @QueryParameter final String clientSecret,
-                @QueryParameter final String oauth2TokenEndpoint,
-                @QueryParameter final String serviceManagementURL,
-                @QueryParameter final String authenticationEndpoint,
-                @QueryParameter final String resourceManagerEndpoint,
-                @QueryParameter final String graphEndpoint) {
+        public FormValidation doVerifyConfiguration(
+                @QueryParameter String subscriptionId,
+                @QueryParameter String clientId,
+                @QueryParameter String clientSecret,
+                @QueryParameter String oauth2TokenEndpoint,
+                @QueryParameter String serviceManagementURL,
+                @QueryParameter String authenticationEndpoint,
+                @QueryParameter String resourceManagerEndpoint,
+                @QueryParameter String graphEndpoint) {
 
             AzureCredentials.ServicePrincipal servicePrincipal
                     = new AzureCredentials.ServicePrincipal(

@@ -17,6 +17,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -37,12 +38,12 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
     private final Secret password;
 
     @DataBoundConstructor
-    public SecretCertificateCredentials(final CredentialsScope scope,
-                                        final String id,
-                                        final String description,
-                                        final String servicePrincipalId,
-                                        final String secretIdentifier,
-                                        final Secret password) {
+    public SecretCertificateCredentials(CredentialsScope scope,
+                                        String id,
+                                        String description,
+                                        String servicePrincipalId,
+                                        String secretIdentifier,
+                                        Secret password) {
         super(scope, id, description, servicePrincipalId, secretIdentifier);
         this.password = password;
     }
@@ -54,13 +55,13 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
     }
 
     /**
-     * Helper to convert a {@link Secret} password into a {@code char[]}
+     * Helper to convert a {@link Secret} password into a {@code char[]}.
      *
      * @param password the password.
      * @return a {@code char[]} containing the password or {@code null}
      */
     @CheckForNull
-    private static char[] toCharArray(@NonNull final Secret password) {
+    private static char[] toCharArray(@Nonnull Secret password) {
         String plainText = Util.fixEmpty(password.getPlainText());
         if (plainText == null) {
             return null;
@@ -86,7 +87,7 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
             keyStore.load(new ByteArrayInputStream(content), toCharArray(password));
         } catch (CertificateException | NoSuchAlgorithmException | IOException e) {
             final LogRecord lr = new LogRecord(Level.WARNING, "Credentials ID {0}: Could not load keystore from {1}");
-            lr.setParameters(new Object[]{getId(), secretIdentifier});
+            lr.setParameters(new Object[]{getId(), getSecretIdentifier()});
             lr.setThrown(e);
             LOGGER.log(lr);
         }
@@ -102,10 +103,10 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
             return Messages.Certificate_Credentials_Display_Name();
         }
 
-        public final FormValidation doVerifyConfiguration(
-                @QueryParameter final String servicePrincipalId,
-                @QueryParameter final String secretIdentifier,
-                @QueryParameter final Secret password) {
+        public FormValidation doVerifyConfiguration(
+                @QueryParameter String servicePrincipalId,
+                @QueryParameter String secretIdentifier,
+                @QueryParameter Secret password) {
 
             final SecretCertificateCredentials credentials = new SecretCertificateCredentials(
                     CredentialsScope.SYSTEM, "", "", servicePrincipalId, secretIdentifier, password);

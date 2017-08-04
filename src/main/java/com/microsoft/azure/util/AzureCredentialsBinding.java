@@ -28,21 +28,28 @@ import java.util.Set;
  * Custom binding for AzureCredentials to support reading Azure service principal in both freestyle
  * and pipeline using Credentials Binding plugin.
  * There're two ways to construct this binding:
- * 1. With defaults, which will read specified service principal into four predefined environment
- *    variables: AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID.
- *    Sample pipeline code:
- *      withCredentials([azureServicePrincipal('credentials_id')]) {
- *          sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
- *      }
- * 2. With custom name, where you can control the names of the variables.
- *    Sample pipeline code:
- *      withCredentials([azureServicePrincipal(credentialsId: 'credentials_id',
- *                                        subscriptionIdVariable: 'SUBS_ID',
- *                                        clientIdVariable: 'CLIENT_ID',
- *                                        clientSecretVariable: 'CLIENT_SECRET',
- *                                        tenantIdVariable: 'TENANT_ID')]) {
- *          sh 'az login --service-principal -u $CLIENT_ID -p $CLIENT_SECRET -t $TENANT_ID'
- *      }
+ * <ol>
+ * <li>With defaults, which will read specified service principal into four predefined environment variables:
+ * <code>AZURE_SUBSCRIPTION_ID</code>, <code>AZURE_CLIENT_ID</code>, <code>AZURE_CLIENT_SECRET</code>,
+ * <code>AZURE_TENANT_ID</code>. Sample pipeline code:
+ * <pre><code>
+ *     withCredentials([azureServicePrincipal('credentials_id')]) {
+ *         sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
+ *     }
+ * </code></pre>
+ * </li>
+ * <li>With custom name, where you can control the names of the variables. Sample pipeline code:
+ * <pre><code>
+ *     withCredentials([azureServicePrincipal(credentialsId: 'credentials_id',
+ *                                            subscriptionIdVariable: 'SUBS_ID',
+ *                                            clientIdVariable: 'CLIENT_ID',
+ *                                            clientSecretVariable: 'CLIENT_SECRET',
+ *                                            tenantIdVariable: 'TENANT_ID')]) {
+ *         sh 'az login --service-principal -u $CLIENT_ID -p $CLIENT_SECRET -t $TENANT_ID'
+ *     }
+ * </code></pre>
+ * </li>
+ * </ol>
  */
 public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
     public static final String DEFAULT_SUBSCRIPTION_ID_VARIABLE = "AZURE_SUBSCRIPTION_ID";
@@ -56,31 +63,31 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
     private String tenantIdVariable;
 
     @DataBoundConstructor
-    public AzureCredentialsBinding(final String credentialsId) {
+    public AzureCredentialsBinding(String credentialsId) {
         super(credentialsId);
     }
 
     @DataBoundSetter
-    public final void setSubscriptionIdVariable(final String subscriptionIdVariable) {
+    public void setSubscriptionIdVariable(String subscriptionIdVariable) {
         this.subscriptionIdVariable = subscriptionIdVariable;
     }
 
     @DataBoundSetter
-    public final void setClientIdVariable(final String clientIdVariable) {
+    public void setClientIdVariable(String clientIdVariable) {
         this.clientIdVariable = clientIdVariable;
     }
 
     @DataBoundSetter
-    public final void setClientSecretVariable(final String clientSecretVariable) {
+    public void setClientSecretVariable(String clientSecretVariable) {
         this.clientSecretVariable = clientSecretVariable;
     }
 
     @DataBoundSetter
-    public final void setTenantIdVariable(final String tenantIdVariable) {
+    public void setTenantIdVariable(String tenantIdVariable) {
         this.tenantIdVariable = tenantIdVariable;
     }
 
-    public final String getSubscriptionIdVariable() {
+    public String getSubscriptionIdVariable() {
         if (!StringUtils.isBlank(subscriptionIdVariable)) {
             return subscriptionIdVariable;
         }
@@ -88,7 +95,7 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
         return DEFAULT_SUBSCRIPTION_ID_VARIABLE;
     }
 
-    public final String getClientIdVariable() {
+    public String getClientIdVariable() {
         if (!StringUtils.isBlank(clientIdVariable)) {
             return clientIdVariable;
         }
@@ -96,7 +103,7 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
         return DEFAULT_CLIENT_ID_VARIABLE;
     }
 
-    public final String getClientSecretVariable() {
+    public String getClientSecretVariable() {
         if (!StringUtils.isBlank(clientSecretVariable)) {
             return clientSecretVariable;
         }
@@ -104,7 +111,7 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
         return DEFAULT_CLIENT_SECRET_VARIABLE;
     }
 
-    public final String getTenantIdVariable() {
+    public String getTenantIdVariable() {
         if (!StringUtils.isBlank(tenantIdVariable)) {
             return tenantIdVariable;
         }
@@ -113,15 +120,15 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
     }
 
     @Override
-    protected final Class<AzureCredentials> type() {
+    protected Class<AzureCredentials> type() {
         return AzureCredentials.class;
     }
 
     @Override
-    public final MultiEnvironment bind(@Nonnull final Run<?, ?> build,
-                                       final FilePath workspace,
-                                       final Launcher launcher,
-                                       final TaskListener listener)
+    public MultiEnvironment bind(@Nonnull Run<?, ?> build,
+                                 FilePath workspace,
+                                 Launcher launcher,
+                                 TaskListener listener)
             throws IOException, InterruptedException {
         AzureCredentials credentials = getCredentials(build);
         Map<String, String> map = new HashMap<>();
@@ -133,7 +140,7 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
     }
 
     @Override
-    public final Set<String> variables() {
+    public Set<String> variables() {
         return new HashSet<String>(Arrays.asList(
                 getSubscriptionIdVariable(),
                 getClientIdVariable(),
@@ -145,33 +152,33 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
     @Extension
     public static class DescriptorImpl extends BindingDescriptor<AzureCredentials> {
         @Override
-        protected final Class<AzureCredentials> type() {
+        protected Class<AzureCredentials> type() {
             return AzureCredentials.class;
         }
 
         @Override
-        public final String getDisplayName() {
+        public String getDisplayName() {
             return Messages.Azure_Credentials_Binding_Diaplay_Name();
         }
 
         @Override
-        public final boolean requiresWorkspace() {
+        public boolean requiresWorkspace() {
             return false;
         }
 
-        public final String getDefaultSubscriptionIdVariable() {
+        public String getDefaultSubscriptionIdVariable() {
             return DEFAULT_SUBSCRIPTION_ID_VARIABLE;
         }
 
-        public final String getDefaultClientIdVariable() {
+        public String getDefaultClientIdVariable() {
             return DEFAULT_CLIENT_ID_VARIABLE;
         }
 
-        public final String getDefaultClientSecretVariable() {
+        public String getDefaultClientSecretVariable() {
             return DEFAULT_CLIENT_SECRET_VARIABLE;
         }
 
-        public final String getDefaultTenantIdVariable() {
+        public String getDefaultTenantIdVariable() {
             return DEFAULT_TENANT_ID_VARIABLE;
         }
     }
