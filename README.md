@@ -6,18 +6,14 @@ Jenkins Plugin to manage Azure Service Principal credentials.
 * [General information on how to use credentials in Jenkins](https://wiki.jenkins-ci.org/display/JENKINS/Credentials+Plugin)
 
 #### Using existing credentials to login to Azure using the Java Azure SDK
+
 ```Java
 ServicePrincipal servicePrincipal = AzureCredentials.getServicePrincipal("<credentials_id>");
 Azure azClient = Azure.authenticate(new ApplicationTokenCredentials(
                 servicePrincipal.getClientId(),
                 servicePrincipal.getTenant(),
                 servicePrincipal.getClientSecret(),
-                new AzureEnvironment(
-                        servicePrincipal.getAuthenticationEndpoint(),
-                        servicePrincipal.getServiceManagementURL(),
-                        servicePrincipal.getResourceManagerEndpoint(),
-                        servicePrincipal.getGraphEndpoint()
-                ));
+                servicePrincipal.getAzureEnvironment()));
 ```
 
 #### Getting an iterator to all SYSTEM owned Azure Credentials

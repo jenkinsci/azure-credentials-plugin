@@ -34,32 +34,31 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
 
     @Before
     public void setUp() throws InterruptedException {
-       // Create Azure KeyVault
-       final Azure azureClient = IntegrationTestBase.getAzureClient();
-       vaultName = "tst-vault-" + TestEnvironment.GenerateRandomString(5);
-       final Vault vault = azureClient.vaults().define(vaultName)
-               .withRegion(testEnv.region)
-               .withNewResourceGroup(testEnv.resourceGroup)
-               .defineAccessPolicy()
-                   .forServicePrincipal(testEnv.clientId)
-                   .allowSecretAllPermissions()
-                   .attach()
-               .create();
-       vaultUri = vault.vaultUri();
+        // Create Azure KeyVault
+        final Azure azureClient = IntegrationTestBase.getAzureClient();
+        vaultName = "tst-vault-" + TestEnvironment.GenerateRandomString(5);
+        final Vault vault = azureClient.vaults().define(vaultName)
+                .withRegion(testEnv.region)
+                .withNewResourceGroup(testEnv.resourceGroup)
+                .defineAccessPolicy()
+                .forServicePrincipal(testEnv.clientId)
+                .allowSecretAllPermissions()
+                .attach()
+                .create();
+        vaultUri = vault.vaultUri();
 
-       waitForKeyVaultAvailable();
+        waitForKeyVaultAvailable();
 
-       // Create Jenkins Azure Credentials
+        // Create Jenkins Azure Credentials
         final AzureCredentials credentials = new AzureCredentials(
                 CredentialsScope.SYSTEM,
                 jenkinsAzureCredentialsId,
                 "",
                 testEnv.subscriptionId,
                 testEnv.clientId,
-                testEnv.clientSecret,
-                "http://host/" + testEnv.tenantId + "/oauth2",
-                "", "" ,"", ""
-        );
+                testEnv.clientSecret);
+        credentials.setOauth2TokenEndpoint("http://host/" + testEnv.tenantId + "/oauth2");
+
         final CredentialsStore store = CredentialsProvider.lookupStores(j.jenkins).iterator().next();
         try {
             store.addCredentials(Domain.global(), credentials);
@@ -70,8 +69,9 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
 
     /**
      * Wait until key vault available.
-     *
+     * <p>
      * There may be some delay before key vault becomes available once created.
+     *
      * @throws InterruptedException
      */
     private void waitForKeyVaultAvailable() throws InterruptedException {
