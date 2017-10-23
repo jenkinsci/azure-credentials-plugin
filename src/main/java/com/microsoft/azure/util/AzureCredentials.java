@@ -24,8 +24,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import java.io.ObjectStreamException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 public class AzureCredentials extends BaseStandardCredentials {
     public static class ValidationException extends Exception {
@@ -55,9 +57,64 @@ public class AzureCredentials extends BaseStandardCredentials {
         private String resourceManagerEndpoint;
         private String graphEndpoint;
 
+        /**
+         * Name of the Azure Environment.
+         * <p>
+         * Added in the migration to Azure SDK 1.3.0.
+         */
         private String azureEnvironmentName;
 
+        /**
+         * Cache of the resolved azure environment.
+         * <p>
+         * This should be cleared whenever the {@link #azureEnvironmentName}, or any of the endpoint override
+         * is updated.
+         */
         private transient AzureEnvironment azureEnvironment;
+
+        /**
+         * After deserialization hook to upgrade legacy service principal data.
+         * <p>
+         * XStream serialization / deserialization used by Jenkins doesn't support objects with  readObject/writeObject
+         * defined.
+         */
+        private Object readResolve() throws ObjectStreamException {
+            if (StringUtils.isNotBlank(azureEnvironmentName)) {
+                // we have already migrated to the latest format, skip the resolving.
+                return this;
+            }
+
+            Map<String, AzureEnvironment> environmentMap = new HashMap<>();
+            environmentMap.put(Constants.ENV_AZURE, AzureEnvironment.AZURE);
+            environmentMap.put(Constants.ENV_AZURE_CHINA, AzureEnvironment.AZURE_CHINA);
+            environmentMap.put(Constants.ENV_AZURE_GERMANY, AzureEnvironment.AZURE_GERMANY);
+            environmentMap.put(Constants.ENV_AZURE_US_GOVERNMENT, AzureEnvironment.AZURE_US_GOVERNMENT);
+
+            // If the environment name is not recognized, which may happen when the user upgraded the plugin
+            // and didn't update the credentials, we try to match a known environment.
+            boolean matched = false;
+            for (Map.Entry<String, AzureEnvironment> entry : environmentMap.entrySet()) {
+                if (matchEnvironment(entry.getValue())) {
+                    azureEnvironmentName = entry.getKey();
+
+                    // user hasn't modified the default endpoint URL's, so we clear them so as to pick up the defaults
+                    // in the environments.
+                    serviceManagementURL = null;
+                    authenticationEndpoint = null;
+                    resourceManagerEndpoint = null;
+                    graphEndpoint = null;
+
+                    matched = true;
+                    break;
+                }
+            }
+
+            if (!matched) {
+                azureEnvironmentName = Constants.ENV_AZURE;
+            }
+
+            return this;
+        }
 
         public String getSubscriptionId() {
             if (subscriptionId == null) {
@@ -116,18 +173,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             } else if (Constants.ENV_AZURE_US_GOVERNMENT.equalsIgnoreCase(envName)) {
                 baseEnvironment = AzureEnvironment.AZURE_US_GOVERNMENT;
             } else {
-                // If the environment name is not recognized, which may happen when the user upgraded the plugin
-                // and didn't update the credentials, we try to match a known environment.
-                for (AzureEnvironment env : AzureEnvironment.knownEnvironments()) {
-                    if (matchEnvironment(env)) {
-                        baseEnvironment = env;
-                        break;
-                    }
-                }
-                if (baseEnvironment == null) {
-                    // fallback using the default Azure environment
-                    baseEnvironment = AzureEnvironment.AZURE;
-                }
+                baseEnvironment = AzureEnvironment.AZURE;
             }
 
             // The AzureEnvironment#endpoints() method is exposing the internal endpoint map, which means the call site
@@ -252,7 +298,7 @@ public class AzureCredentials extends BaseStandardCredentials {
 
         private boolean isOverridden(String defaultURL, String overrideURL) {
             return StringUtils.isNotBlank(overrideURL)
-                    && !defaultURL.replaceAll("/+$", "").equals(overrideURL.replaceAll("/+$", ""));
+                    && !defaultURL.replaceAll("/+$", "").equalsIgnoreCase(overrideURL.replaceAll("/+$", ""));
         }
 
         public ServicePrincipal(
