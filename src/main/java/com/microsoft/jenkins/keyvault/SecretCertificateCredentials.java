@@ -12,7 +12,7 @@ import hudson.Extension;
 import hudson.Util;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
-import org.apache.commons.net.util.Base64;
+import org.apache.commons.codec.binary.Base64;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
