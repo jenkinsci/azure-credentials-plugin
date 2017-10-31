@@ -246,13 +246,13 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        void setServiceManagementURL(String serviceManagementURL) {
-            this.serviceManagementURL = StringUtils.trimToNull(serviceManagementURL);
+        void setManagementEndpoint(String managementEndpoint) {
+            this.serviceManagementURL = StringUtils.trimToNull(managementEndpoint);
             this.azureEnvironment = null;
         }
 
-        void setAuthenticationEndpoint(String authenticationEndpoint) {
-            this.authenticationEndpoint = StringUtils.trimToNull(authenticationEndpoint);
+        void setActiveDirectoryEndpoint(String activeDirectoryEndpoint) {
+            this.authenticationEndpoint = StringUtils.trimToNull(activeDirectoryEndpoint);
             this.azureEnvironment = null;
         }
 
@@ -309,6 +309,29 @@ public class AzureCredentials extends BaseStandardCredentials {
             this.clientId = Secret.fromString(clientId);
             this.clientSecret = Secret.fromString(clientSecret);
             this.tenant = Secret.fromString("");
+        }
+
+        /**
+         * @deprecated leave for backward compatibility.
+         */
+        @Deprecated
+        public ServicePrincipal(
+                String subscriptionId,
+                String clientId,
+                String clientSecret,
+                String oauth2TokenEndpoint,
+                String serviceManagementURL,
+                String authenticationEndpoint,
+                String resourceManagerEndpoint,
+                String graphEndpoint) {
+            this.subscriptionId = Secret.fromString(subscriptionId);
+            this.clientId = Secret.fromString(clientId);
+            this.clientSecret = Secret.fromString(clientSecret);
+            this.tenant = Secret.fromString(ServicePrincipal.getTenantFromTokenEndpoint(oauth2TokenEndpoint));
+            this.serviceManagementURL = StringUtils.trimToNull(serviceManagementURL);
+            this.authenticationEndpoint = StringUtils.trimToNull(authenticationEndpoint);
+            this.resourceManagerEndpoint = StringUtils.trimToNull(resourceManagerEndpoint);
+            this.graphEndpoint = StringUtils.trimToNull(graphEndpoint);
         }
 
         public ServicePrincipal() {
@@ -389,6 +412,31 @@ public class AzureCredentials extends BaseStandardCredentials {
         data = new ServicePrincipal(subscriptionId, clientId, clientSecret);
     }
 
+    /**
+     * @deprecated Leave for backward compatibility.
+     */
+    @Deprecated
+    public AzureCredentials(
+            CredentialsScope scope,
+            String id,
+            String description,
+            String subscriptionId,
+            String clientId,
+            String clientSecret,
+            String oauth2TokenEndpoint,
+            String serviceManagementURL,
+            String authenticationEndpoint,
+            String resourceManagerEndpoint,
+            String graphEndpoint) {
+        super(scope, id, description);
+        data = new ServicePrincipal(subscriptionId, clientId, clientSecret);
+        data.setTenant(ServicePrincipal.getTenantFromTokenEndpoint(oauth2TokenEndpoint));
+        data.setManagementEndpoint(serviceManagementURL);
+        data.setActiveDirectoryEndpoint(authenticationEndpoint);
+        data.setResourceManagerEndpoint(resourceManagerEndpoint);
+        data.setGraphEndpoint(graphEndpoint);
+    }
+
     public static AzureCredentials.ServicePrincipal getServicePrincipal(
             String credentialsId) {
         AzureCredentials creds = CredentialsMatchers.firstOrNull(
@@ -460,22 +508,54 @@ public class AzureCredentials extends BaseStandardCredentials {
         this.data.setAzureEnvironmentName(azureEnvironmentName);
     }
 
+    /**
+     * @deprecated use {@link #getManagementEndpoint()}.
+     */
+    @Deprecated
     public String getServiceManagementURL() {
+        return getManagementEndpoint();
+    }
+
+    public String getManagementEndpoint() {
         return data.serviceManagementURL;
     }
 
+    /**
+     * @deprecated use {@link #setManagementEndpoint(String)}.
+     */
     @DataBoundSetter
+    @Deprecated
     public void setServiceManagementURL(String serviceManagementURL) {
-        this.data.setServiceManagementURL(serviceManagementURL);
+        setManagementEndpoint(serviceManagementURL);
     }
 
+    public void setManagementEndpoint(String managementEndpoint) {
+        this.data.setManagementEndpoint(managementEndpoint);
+    }
+
+    /**
+     * @deprecated use {@link #getActiveDirectoryEndpoint()}.
+     */
+    @Deprecated
     public String getAuthenticationEndpoint() {
+        return getActiveDirectoryEndpoint();
+    }
+
+    public String getActiveDirectoryEndpoint() {
         return data.authenticationEndpoint;
     }
 
+    /**
+     * @deprecated use {@link #setActiveDirectoryEndpoint(String)}.
+     */
     @DataBoundSetter
+    @Deprecated
     public void setAuthenticationEndpoint(String authenticationEndpoint) {
-        this.data.setAuthenticationEndpoint(authenticationEndpoint);
+        setActiveDirectoryEndpoint(authenticationEndpoint);
+    }
+
+    public void setActiveDirectoryEndpoint(String activeDirectoryEndpoint) {
+        this.data.setActiveDirectoryEndpoint(activeDirectoryEndpoint);
     }
 
     public String getResourceManagerEndpoint() {
@@ -522,8 +602,8 @@ public class AzureCredentials extends BaseStandardCredentials {
             AzureCredentials.ServicePrincipal servicePrincipal
                     = new AzureCredentials.ServicePrincipal(subscriptionId, clientId, clientSecret);
             servicePrincipal.setTenant(tenant);
-            servicePrincipal.setServiceManagementURL(serviceManagementURL);
-            servicePrincipal.setAuthenticationEndpoint(authenticationEndpoint);
+            servicePrincipal.setManagementEndpoint(serviceManagementURL);
+            servicePrincipal.setActiveDirectoryEndpoint(authenticationEndpoint);
             servicePrincipal.setResourceManagerEndpoint(resourceManagerEndpoint);
             servicePrincipal.setGraphEndpoint(graphEndpoint);
             try {
