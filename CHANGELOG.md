@@ -4,6 +4,7 @@
 * Support for Azure KeyVault credentials
 * Support for MSI credentials
 * Upgrade Azure SDK dependency to version 1.3.0
+* Add Third Party Notices
 
 ## Version 1.2, 2017-06-19
 * Show unencrypted value for subscription ID, client ID and OAuth2 endpoint in credentials update page
