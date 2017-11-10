@@ -153,7 +153,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
         }
 
-        String getAzureEnvironmentName() {
+        public String getAzureEnvironmentName() {
             return azureEnvironmentName;
         }
 
@@ -499,7 +499,15 @@ public class AzureCredentials extends BaseStandardCredentials {
         this.data.setOauth2TokenEndpoint(oauth2TokenEndpoint);
     }
 
+    /**
+     * typo.
+     */
+    @Deprecated
     public String getAzureEnvionmentName() {
+        return data.getAzureEnvironmentName();
+    }
+
+    public String getAzureEnvironmentName() {
         return data.getAzureEnvironmentName();
     }
 
