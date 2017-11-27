@@ -13,7 +13,7 @@ import java.util.Map;
 public class AzureMsiCredentials extends BaseStandardCredentials {
 
     public static final int DEFAULT_MSI_PORT = 50342;
-    private static final long serialVersionUID = 6743945878507124459L;
+    private static final long serialVersionUID = 1L;
 
     private final int msiPort;
     private String azureEnvName;
@@ -26,28 +26,14 @@ public class AzureMsiCredentials extends BaseStandardCredentials {
         this.msiPort = msiPort;
         this.azureEnvName = azureEnvName;
 
-        resolveAzureEnv();
-    }
-
-    private void resolveAzureEnv() {
-        if (AzureCredentials.Constants.ENV_AZURE.equalsIgnoreCase(azureEnvName)) {
-            azureEnvironment = AzureEnvironment.AZURE;
-        } else if (AzureCredentials.Constants.ENV_AZURE_CHINA.equalsIgnoreCase(azureEnvName)) {
-            azureEnvironment = AzureEnvironment.AZURE_CHINA;
-        } else if (AzureCredentials.Constants.ENV_AZURE_GERMANY.equalsIgnoreCase(azureEnvName)) {
-            azureEnvironment = AzureEnvironment.AZURE_GERMANY;
-        } else if (AzureCredentials.Constants.ENV_AZURE_US_GOVERNMENT.equalsIgnoreCase(azureEnvName)) {
-            azureEnvironment = AzureEnvironment.AZURE_US_GOVERNMENT;
-        } else {
-            azureEnvironment = AzureEnvironment.AZURE;
-        }
+        azureEnvironment = AzureEnvUtil.resolveAzureEnv(azureEnvName);
     }
 
     private Object readResolve() {
         if (StringUtils.isEmpty(azureEnvName)) {
-            this.azureEnvName = AzureCredentials.Constants.ENV_AZURE;
+            this.azureEnvName = AzureEnvUtil.Constants.ENV_AZURE;
         }
-        resolveAzureEnv();
+        azureEnvironment = AzureEnvUtil.resolveAzureEnv(azureEnvName);
         return this;
     }
 
@@ -98,10 +84,10 @@ public class AzureMsiCredentials extends BaseStandardCredentials {
 
         public ListBoxModel doFillAzureEnvNameItems() {
             ListBoxModel model = new ListBoxModel();
-            model.add(AzureCredentials.Constants.ENV_AZURE);
-            model.add(AzureCredentials.Constants.ENV_AZURE_CHINA);
-            model.add(AzureCredentials.Constants.ENV_AZURE_GERMANY);
-            model.add(AzureCredentials.Constants.ENV_AZURE_US_GOVERNMENT);
+            model.add(AzureEnvUtil.Constants.ENV_AZURE);
+            model.add(AzureEnvUtil.Constants.ENV_AZURE_CHINA);
+            model.add(AzureEnvUtil.Constants.ENV_AZURE_GERMANY);
+            model.add(AzureEnvUtil.Constants.ENV_AZURE_US_GOVERNMENT);
             return model;
         }
     }
