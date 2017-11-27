@@ -1,7 +1,8 @@
 # Azure Credentials Plugin Changelog
 
 ## Version 1.3.1, 2017-11-27
-* Disable plugin first class loader to fix remote class loading issue before Jenkins 2.66
+* Disable plugin first class loader to fix remote class loading issue before Jenkins 2.66.
+   `PluginFirstClassLoader#findResource` returns null which causes `ClassNotFoundException` on remote class loading from slave to master.
 
 ## Version 1.3, 2017-11-03
 * Support for Azure KeyVault credentials
