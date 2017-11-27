@@ -37,13 +37,6 @@ public class AzureCredentials extends BaseStandardCredentials {
         }
     }
 
-    public static class Constants {
-        static final String ENV_AZURE = "Azure";
-        static final String ENV_AZURE_CHINA = "Azure China";
-        static final String ENV_AZURE_GERMANY = "Azure Germany";
-        static final String ENV_AZURE_US_GOVERNMENT = "Azure US Government";
-    }
-
     public static class ServicePrincipal implements java.io.Serializable {
         private static final long serialVersionUID = 1L;
 
@@ -85,10 +78,10 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
 
             Map<String, AzureEnvironment> environmentMap = new HashMap<>();
-            environmentMap.put(Constants.ENV_AZURE, AzureEnvironment.AZURE);
-            environmentMap.put(Constants.ENV_AZURE_CHINA, AzureEnvironment.AZURE_CHINA);
-            environmentMap.put(Constants.ENV_AZURE_GERMANY, AzureEnvironment.AZURE_GERMANY);
-            environmentMap.put(Constants.ENV_AZURE_US_GOVERNMENT, AzureEnvironment.AZURE_US_GOVERNMENT);
+            environmentMap.put(AzureEnvUtil.Constants.ENV_AZURE, AzureEnvironment.AZURE);
+            environmentMap.put(AzureEnvUtil.Constants.ENV_AZURE_CHINA, AzureEnvironment.AZURE_CHINA);
+            environmentMap.put(AzureEnvUtil.Constants.ENV_AZURE_GERMANY, AzureEnvironment.AZURE_GERMANY);
+            environmentMap.put(AzureEnvUtil.Constants.ENV_AZURE_US_GOVERNMENT, AzureEnvironment.AZURE_US_GOVERNMENT);
 
             // If the environment name is not recognized, which may happen when the user upgraded the plugin
             // and didn't update the credentials, we try to match a known environment.
@@ -110,7 +103,7 @@ public class AzureCredentials extends BaseStandardCredentials {
             }
 
             if (!matched) {
-                azureEnvironmentName = Constants.ENV_AZURE;
+                azureEnvironmentName = AzureEnvUtil.Constants.ENV_AZURE;
             }
 
             return this;
@@ -162,31 +155,17 @@ public class AzureCredentials extends BaseStandardCredentials {
                 return azureEnvironment;
             }
 
-            AzureEnvironment baseEnvironment = null;
             String envName = getAzureEnvironmentName();
-            if (Constants.ENV_AZURE.equalsIgnoreCase(envName)) {
-                baseEnvironment = AzureEnvironment.AZURE;
-            } else if (Constants.ENV_AZURE_CHINA.equalsIgnoreCase(envName)) {
-                baseEnvironment = AzureEnvironment.AZURE_CHINA;
-            } else if (Constants.ENV_AZURE_GERMANY.equalsIgnoreCase(envName)) {
-                baseEnvironment = AzureEnvironment.AZURE_GERMANY;
-            } else if (Constants.ENV_AZURE_US_GOVERNMENT.equalsIgnoreCase(envName)) {
-                baseEnvironment = AzureEnvironment.AZURE_US_GOVERNMENT;
-            } else {
-                baseEnvironment = AzureEnvironment.AZURE;
-            }
+            azureEnvironment = AzureEnvUtil.resolveAzureEnv(envName);
 
-            // The AzureEnvironment#endpoints() method is exposing the internal endpoint map, which means the call site
-            // may change the details of the built-in known environments.
-            // The ideal fix should be applied in Azure SDK. Here we make a copy so that other plugins that calls this
-            // method won't modify the known environments by accident.
-            azureEnvironment = new AzureEnvironment(new HashMap<>(baseEnvironment.endpoints()));
-
-            resolveOverride(azureEnvironment, AzureEnvironment.Endpoint.MANAGEMENT, serviceManagementURL);
-            resolveOverride(azureEnvironment, AzureEnvironment.Endpoint.ACTIVE_DIRECTORY, authenticationEndpoint);
-            resolveOverride(azureEnvironment, AzureEnvironment.Endpoint.RESOURCE_MANAGER, resourceManagerEndpoint);
-            resolveOverride(azureEnvironment, AzureEnvironment.Endpoint.GRAPH, graphEndpoint);
-
+            AzureEnvUtil.resolveOverride(azureEnvironment,
+                    AzureEnvironment.Endpoint.MANAGEMENT, serviceManagementURL);
+            AzureEnvUtil.resolveOverride(azureEnvironment,
+                    AzureEnvironment.Endpoint.ACTIVE_DIRECTORY, authenticationEndpoint);
+            AzureEnvUtil.resolveOverride(azureEnvironment,
+                    AzureEnvironment.Endpoint.RESOURCE_MANAGER, resourceManagerEndpoint);
+            AzureEnvUtil.resolveOverride(azureEnvironment,
+                    AzureEnvironment.Endpoint.GRAPH, graphEndpoint);
             return azureEnvironment;
         }
 
@@ -272,33 +251,10 @@ public class AzureCredentials extends BaseStandardCredentials {
         }
 
         private boolean matchEnvironment(AzureEnvironment env) {
-            return !isOverridden(env.managementEndpoint(), serviceManagementURL)
-                    && !isOverridden(env.resourceManagerEndpoint(), resourceManagerEndpoint)
-                    && !isOverridden(env.activeDirectoryEndpoint(), authenticationEndpoint)
-                    && !isOverridden(env.graphEndpoint(), graphEndpoint);
-        }
-
-        private boolean resolveOverride(
-                AzureEnvironment environment, AzureEnvironment.Endpoint endpoint, String stored) {
-            if (StringUtils.isBlank(stored)) {
-                return false;
-            }
-            String defaultValue = environment.endpoints().get(endpoint.identifier());
-            if (StringUtils.isBlank(defaultValue)) {
-                // should not happen
-                environment.endpoints().put(endpoint.identifier(), stored);
-                return true;
-            }
-            if (isOverridden(defaultValue, stored)) {
-                environment.endpoints().put(endpoint.identifier(), stored);
-                return true;
-            }
-            return false;
-        }
-
-        private boolean isOverridden(String defaultURL, String overrideURL) {
-            return StringUtils.isNotBlank(overrideURL)
-                    && !defaultURL.replaceAll("/+$", "").equalsIgnoreCase(overrideURL.replaceAll("/+$", ""));
+            return !AzureEnvUtil.isOverridden(env.managementEndpoint(), serviceManagementURL)
+                    && !AzureEnvUtil.isOverridden(env.resourceManagerEndpoint(), resourceManagerEndpoint)
+                    && !AzureEnvUtil.isOverridden(env.activeDirectoryEndpoint(), authenticationEndpoint)
+                    && !AzureEnvUtil.isOverridden(env.graphEndpoint(), graphEndpoint);
         }
 
         public ServicePrincipal(
@@ -625,10 +581,10 @@ public class AzureCredentials extends BaseStandardCredentials {
 
         public ListBoxModel doFillAzureEnvironmentNameItems() {
             ListBoxModel model = new ListBoxModel();
-            model.add(Constants.ENV_AZURE);
-            model.add(Constants.ENV_AZURE_CHINA);
-            model.add(Constants.ENV_AZURE_GERMANY);
-            model.add(Constants.ENV_AZURE_US_GOVERNMENT);
+            model.add(AzureEnvUtil.Constants.ENV_AZURE);
+            model.add(AzureEnvUtil.Constants.ENV_AZURE_CHINA);
+            model.add(AzureEnvUtil.Constants.ENV_AZURE_GERMANY);
+            model.add(AzureEnvUtil.Constants.ENV_AZURE_US_GOVERNMENT);
             return model;
         }
     }
