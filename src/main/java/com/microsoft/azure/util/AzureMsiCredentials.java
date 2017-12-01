@@ -19,13 +19,17 @@ public class AzureMsiCredentials extends BaseStandardCredentials {
     private String azureEnvName;
     private transient AzureEnvironment azureEnvironment;
 
+    @Deprecated
+    public AzureMsiCredentials(CredentialsScope scope, String id, String description, int msiPort) {
+        this(scope, id, description, msiPort, AzureEnvUtil.Constants.ENV_AZURE);
+    }
+
     @DataBoundConstructor
     public AzureMsiCredentials(CredentialsScope scope, String id, String description, int msiPort,
                                String azureEnvName) {
         super(scope, id, description);
         this.msiPort = msiPort;
         this.azureEnvName = azureEnvName;
-
         azureEnvironment = AzureEnvUtil.resolveAzureEnv(azureEnvName);
     }
 
