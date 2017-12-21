@@ -13,6 +13,7 @@ import com.microsoft.azure.AzureEnvironment;
 import com.microsoft.azure.credentials.ApplicationTokenCredentials;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.resources.Subscription;
+import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 import hudson.Extension;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
@@ -29,7 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AzureCredentials extends BaseStandardCredentials {
+public class AzureCredentials extends AzureBaseCredentials {
     public static class ValidationException extends Exception {
 
         public ValidationException(String message) {
@@ -393,6 +394,7 @@ public class AzureCredentials extends BaseStandardCredentials {
         data.setGraphEndpoint(graphEndpoint);
     }
 
+    @Deprecated
     public static AzureCredentials.ServicePrincipal getServicePrincipal(
             String credentialsId) {
         AzureCredentials creds = CredentialsMatchers.firstOrNull(
@@ -463,6 +465,7 @@ public class AzureCredentials extends BaseStandardCredentials {
         return data.getAzureEnvironmentName();
     }
 
+    @Override
     public String getAzureEnvironmentName() {
         return data.getAzureEnvironmentName();
     }
@@ -480,6 +483,7 @@ public class AzureCredentials extends BaseStandardCredentials {
         return getManagementEndpoint();
     }
 
+    @Override
     public String getManagementEndpoint() {
         return data.serviceManagementURL;
     }
@@ -493,6 +497,7 @@ public class AzureCredentials extends BaseStandardCredentials {
         setManagementEndpoint(serviceManagementURL);
     }
 
+    @DataBoundSetter
     public void setManagementEndpoint(String managementEndpoint) {
         this.data.setManagementEndpoint(managementEndpoint);
     }
@@ -505,6 +510,7 @@ public class AzureCredentials extends BaseStandardCredentials {
         return getActiveDirectoryEndpoint();
     }
 
+    @Override
     public String getActiveDirectoryEndpoint() {
         return data.authenticationEndpoint;
     }
@@ -518,10 +524,12 @@ public class AzureCredentials extends BaseStandardCredentials {
         setActiveDirectoryEndpoint(authenticationEndpoint);
     }
 
+    @DataBoundSetter
     public void setActiveDirectoryEndpoint(String activeDirectoryEndpoint) {
         this.data.setActiveDirectoryEndpoint(activeDirectoryEndpoint);
     }
 
+    @Override
     public String getResourceManagerEndpoint() {
         return data.resourceManagerEndpoint;
     }
@@ -531,8 +539,20 @@ public class AzureCredentials extends BaseStandardCredentials {
         this.data.setResourceManagerEndpoint(resourceManagerEndpoint);
     }
 
+    @Override
     public String getGraphEndpoint() {
         return data.graphEndpoint;
+    }
+
+    @Override
+    public TokenCredentialData createToken() {
+        TokenCredentialData token = super.createToken();
+        token.setType(TokenCredentialData.TYPE_SP);
+        token.setClientId(getClientId());
+        token.setClientSecret(getPlainClientSecret());
+        token.setTenant(getTenant());
+        token.setSubscriptionId(getSubscriptionId());
+        return token;
     }
 
     @DataBoundSetter

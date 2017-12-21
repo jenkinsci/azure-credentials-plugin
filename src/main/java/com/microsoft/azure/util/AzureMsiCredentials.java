@@ -3,6 +3,7 @@ package com.microsoft.azure.util;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.microsoft.azure.AzureEnvironment;
+import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 import hudson.Extension;
 import hudson.util.ListBoxModel;
 import org.apache.commons.lang.StringUtils;
@@ -10,7 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.Map;
 
-public class AzureMsiCredentials extends BaseStandardCredentials {
+public class AzureMsiCredentials extends AzureBaseCredentials {
 
     public static final int DEFAULT_MSI_PORT = 50342;
     private static final long serialVersionUID = 1L;
@@ -53,6 +54,11 @@ public class AzureMsiCredentials extends BaseStandardCredentials {
         return azureEnvName;
     }
 
+    @Override
+    public String getAzureEnvironmentName() {
+        return azureEnvName;
+    }
+
     public String getManagementEndpoint() {
         return azureEnvironment.managementEndpoint();
     }
@@ -67,6 +73,14 @@ public class AzureMsiCredentials extends BaseStandardCredentials {
 
     public String getGraphEndpoint() {
         return azureEnvironment.graphEndpoint();
+    }
+
+    @Override
+    public TokenCredentialData createToken() {
+        TokenCredentialData token = super.createToken();
+        token.setType(TokenCredentialData.TYPE_MSI);
+        token.setMsiPort(msiPort);
+        return token;
     }
 
     public Map<String, String> getEndpoints() {
