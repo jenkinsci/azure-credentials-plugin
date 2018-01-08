@@ -168,7 +168,7 @@ public class AzureCredentials extends AzureBaseCredentials {
          * @return the certificate configured in the Service Principal.
          */
         @Nullable
-        public CertificateCredentialsImpl getCertificate() {
+        CertificateCredentialsImpl getCertificate() {
             if (StringUtils.isNotEmpty(clientSecret.getPlainText())) {
                 return null;
             }
@@ -650,6 +650,8 @@ public class AzureCredentials extends AzureBaseCredentials {
         token.setType(TokenCredentialData.TYPE_SP);
         token.setClientId(getClientId());
         token.setClientSecret(getPlainClientSecret());
+        token.setCertificateBytes(data.getCertificateBytes());
+        token.setCertificatePassword(data.getCertificatePassword());
         token.setTenant(getTenant());
         token.setSubscriptionId(getSubscriptionId());
         return token;
