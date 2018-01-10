@@ -7,24 +7,29 @@ package com.microsoft.azure.util;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
+import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;
 import com.microsoft.azure.AzureEnvironment;
 import com.microsoft.azure.credentials.ApplicationTokenCredentials;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.resources.Subscription;
 import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 import hudson.Extension;
+import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nullable;
 import java.io.ObjectStreamException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,6 +49,11 @@ public class AzureCredentials extends AzureBaseCredentials {
         private final Secret subscriptionId;
         private final Secret clientId;
         private final Secret clientSecret;
+        /**
+         * The ID of the PKCS#12 certificate stored in Jenkins master.
+         * Used for authentication if {@link #clientSecret} is not provided.
+         */
+        private String certificateId;
         private Secret oauth2TokenEndpoint; //keeping this for backwards compatibility
         private String serviceManagementURL;
         private Secret tenant;
@@ -132,6 +142,65 @@ public class AzureCredentials extends AzureBaseCredentials {
             } else {
                 return clientSecret.getPlainText();
             }
+        }
+
+        public String getCertificateId() {
+            return certificateId;
+        }
+
+        public void setCertificateId(String certificateId) {
+            this.certificateId = certificateId;
+        }
+
+        /**
+         * Get the certificate configured in the Service Principal.
+         * <p>
+         * Return <code>null</code> if:
+         * <ul>
+         * <li><code>clientSecret</code> is not empty. <code>clientSecret</code> will be used if not empty.</li>
+         * <li><code>certificateId</code> is empty or the given certificate is not found.</li>
+         * </ul>
+         * <p>
+         * Note: Azure {@link ApplicationTokenCredentials} requires the raw bytes of the whole certificate, rather than
+         * the key(s) returned from the KeyStore. We need to return {@link CertificateCredentialsImpl} which has the
+         * <code>getKeyStoreSource()</code> method that returns the raw certificate.
+         *
+         * @return the certificate configured in the Service Principal.
+         */
+        @Nullable
+        CertificateCredentialsImpl getCertificate() {
+            if (StringUtils.isNotEmpty(clientSecret.getPlainText())) {
+                return null;
+            }
+            if (StringUtils.isEmpty(certificateId)) {
+                return null;
+            }
+            CertificateCredentialsImpl certificate = CredentialsMatchers.firstOrNull(
+                    CredentialsProvider.lookupCredentials(
+                            CertificateCredentialsImpl.class,
+                            Jenkins.getInstance(),
+                            ACL.SYSTEM,
+                            Collections.<DomainRequirement>emptyList()),
+                    CredentialsMatchers.withId(certificateId));
+            return certificate;
+        }
+
+        @Nullable
+        public byte[] getCertificateBytes() {
+            CertificateCredentialsImpl certificate = getCertificate();
+            if (certificate == null) {
+                return null;
+            }
+            return certificate.getKeyStoreSource().getKeyStoreBytes();
+        }
+
+        @Nullable
+        public String getCertificatePassword() {
+            CertificateCredentialsImpl certificate = getCertificate();
+            if (certificate == null) {
+                return null;
+            }
+            return certificate.getPassword().getPlainText();
         }
 
         public String getTenant() {
@@ -312,7 +381,8 @@ public class AzureCredentials extends AzureBaseCredentials {
             if (StringUtils.isBlank(clientId.getPlainText())) {
                 throw new ValidationException(Messages.Azure_ClientID_Missing());
             }
-            if (StringUtils.isBlank(clientSecret.getPlainText())) {
+            String secret = clientSecret.getPlainText();
+            if (StringUtils.isEmpty(secret) && StringUtils.isBlank(certificateId)) {
                 throw new ValidationException(Messages.Azure_ClientSecret_Missing());
             }
             if (StringUtils.isBlank(getTenant())) {
@@ -321,12 +391,30 @@ public class AzureCredentials extends AzureBaseCredentials {
 
             try {
                 final String credentialSubscriptionId = getSubscriptionId();
-                Azure.Authenticated auth = Azure.authenticate(
-                        new ApplicationTokenCredentials(
-                                getClientId(),
-                                getTenant(),
-                                getClientSecret(),
-                                getAzureEnvironment()));
+
+                Azure.Authenticated auth;
+
+                if (StringUtils.isEmpty(secret)) {
+                    CertificateCredentialsImpl certificate = getCertificate();
+                    if (certificate == null) {
+                        throw new ValidationException(Messages.Azure_ClientCertificate_NotFound());
+                    }
+                    byte[] certificateBytes = certificate.getKeyStoreSource().getKeyStoreBytes();
+                    auth = Azure.authenticate(
+                            new ApplicationTokenCredentials(
+                                    getClientId(),
+                                    getTenant(),
+                                    certificateBytes,
+                                    certificate.getPassword().getPlainText(),
+                                    getAzureEnvironment()));
+                } else {
+                    auth = Azure.authenticate(
+                            new ApplicationTokenCredentials(
+                                    getClientId(),
+                                    getTenant(),
+                                    getClientSecret(),
+                                    getAzureEnvironment()));
+                }
                 for (Subscription subscription : auth.subscriptions().list()) {
                     if (subscription.subscriptionId().equalsIgnoreCase(credentialSubscriptionId)) {
                         return true;
@@ -419,11 +507,23 @@ public class AzureCredentials extends AzureBaseCredentials {
     }
 
     public String getClientSecret() {
+        if (StringUtils.isEmpty(data.clientSecret.getPlainText())) {
+            return "";
+        }
         return data.clientSecret.getEncryptedValue();
     }
 
     public String getPlainClientSecret() {
         return data.clientSecret.getPlainText();
+    }
+
+    @DataBoundSetter
+    public void setCertificateId(String certificateId) {
+        this.data.setCertificateId(certificateId);
+    }
+
+    public String getCertificateId() {
+        return data.getCertificateId();
     }
 
     public String getTenant() {
@@ -550,6 +650,8 @@ public class AzureCredentials extends AzureBaseCredentials {
         token.setType(TokenCredentialData.TYPE_SP);
         token.setClientId(getClientId());
         token.setClientSecret(getPlainClientSecret());
+        token.setCertificateBytes(data.getCertificateBytes());
+        token.setCertificatePassword(data.getCertificatePassword());
         token.setTenant(getTenant());
         token.setSubscriptionId(getSubscriptionId());
         return token;
@@ -577,6 +679,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                 @QueryParameter String subscriptionId,
                 @QueryParameter String clientId,
                 @QueryParameter String clientSecret,
+                @QueryParameter String certificateId,
                 @QueryParameter String tenant,
                 @QueryParameter String serviceManagementURL,
                 @QueryParameter String authenticationEndpoint,
@@ -585,6 +688,7 @@ public class AzureCredentials extends AzureBaseCredentials {
 
             AzureCredentials.ServicePrincipal servicePrincipal
                     = new AzureCredentials.ServicePrincipal(subscriptionId, clientId, clientSecret);
+            servicePrincipal.setCertificateId(certificateId);
             servicePrincipal.setTenant(tenant);
             servicePrincipal.setManagementEndpoint(serviceManagementURL);
             servicePrincipal.setActiveDirectoryEndpoint(authenticationEndpoint);
@@ -597,6 +701,13 @@ public class AzureCredentials extends AzureBaseCredentials {
             }
 
             return FormValidation.ok(Messages.Azure_Config_Success());
+        }
+
+        public ListBoxModel doFillCertificateIdItems(@AncestorInPath Item owner) {
+            StandardListBoxModel model = new StandardListBoxModel();
+            model.add(Messages.Azure_Credentials_Select(), "");
+            model.includeAs(ACL.SYSTEM, owner, CertificateCredentialsImpl.class);
+            return model;
         }
 
         public ListBoxModel doFillAzureEnvironmentNameItems() {
