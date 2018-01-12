@@ -48,6 +48,24 @@ It supports the following Azure credential types:
        ...
    </build>
    ```
+
+1. Add the credential selector in the `config.jelly` and `Descriptor`
+   ```Xml
+    ...
+    <f:entry title="${%azureCredentialsId_title}" field="azureCredentialsId">
+        <c:select expressionAllowed="false"/>
+    </f:entry>
+    ...
+   ```
+   ```Java
+    public ListBoxModel doFillAzureCredentialsIdItems(@AncestorInPath Item owner) {
+        StandardListBoxModel model = new StandardListBoxModel();
+        model.add(Messages.ACSDeploymentContext_selectAzureCredentials(), Constants.INVALID_OPTION);
+        model.includeAs(ACL.SYSTEM, owner, AzureBaseCredentials.class);
+        return model;
+    }
+   ```
+
 1. Build the Azure client from the credential
 
    ```Java
@@ -62,3 +80,27 @@ It supports the following Azure credential types:
 ```Java
 CredentialsProvider.lookupCredentials(AzureBaseCredentials.class, null, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
 ```
+
+## Using AzureCredentials in the pipeline
+
+Custom binding for AzureCredentials to support reading Azure service principal in both freestyle and pipeline using Credentials Binding plugin. There're two ways to construct this binding:
+
+1.  With defaults, which will read specified service principal into four predefined environment variables: `AZURE_SUBSCRIPTION_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`. Sample pipeline code:
+
+    ```groovy
+    withCredentials([azureServicePrincipal('credentials_id')]) {
+        sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
+    }
+    ```
+
+2.  With custom name, where you can control the names of the variables. Sample pipeline code:
+
+    ```groovy
+    withCredentials([azureServicePrincipal(credentialsId: 'credentials_id',
+                                        subscriptionIdVariable: 'SUBS_ID',
+                                        clientIdVariable: 'CLIENT_ID',
+                                        clientSecretVariable: 'CLIENT_SECRET',
+                                        tenantIdVariable: 'TENANT_ID')]) {
+        sh 'az login --service-principal -u $CLIENT_ID -p $CLIENT_SECRET -t $TENANT_ID'
+    }
+    ```
