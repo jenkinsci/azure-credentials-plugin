@@ -40,7 +40,7 @@ public class SecretStringCredentials extends BaseSecretCredentials implements St
 
         @Override
         public String getDisplayName() {
-            return Messages.String_Credentials_Diaplay_Name();
+            return Messages.String_Credentials_Display_Name();
         }
 
         public FormValidation doVerifyConfiguration(
