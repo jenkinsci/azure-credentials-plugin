@@ -9,12 +9,11 @@ It supports the following Azure credential types:
 1. [Azure Service Principal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal),
    with the following authentication mechanism:
    * Client secret
-   * Certificate (Add the certificate to Jenkins credentials store and reference it in the Azure Service Principal
-      configuration)
+   * Certificate (Add the certificate to Jenkins credentials store and reference it in the Azure Service Principal configuration)
 1. [Azure Managed Service Identity (MSI)](https://docs.microsoft.com/en-us/azure/active-directory/msi-overview)
 1. [Credentials In Azure Key Vault](https://docs.microsoft.com/en-us/azure/key-vault/key-vault-get-started)
 
-## Using existing credentials to login to Azure using the Java Azure SDK
+## Using Azure credentials in your own Jenkins plugin
 
 1. Update your project POM file to reference `azure-credentials` plugin and necessary dependencies:
 
@@ -81,9 +80,20 @@ It supports the following Azure credential types:
 CredentialsProvider.lookupCredentials(AzureBaseCredentials.class, null, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
 ```
 
-## Using AzureCredentials in the pipeline
+## Using AzureCredentials in the job (freestyle / pipeline)
 
-Custom binding for AzureCredentials to support reading Azure service principal in both freestyle and pipeline using Credentials Binding plugin. There're two ways to construct this binding:
+Custom binding for AzureCredentials to support reading Azure service principal in both freestyle and pipeline using Credentials Binding plugin. 
+
+In freestyle jobs, click `Use secret text(s) or file(s)` in the `Build Environment` in the configuration page and add a `Microsoft Azure Service Principal` item, which allows you add credential bindings where the *Variable* value will be used as the name of the environment variable that your build can use to access the value of the credential. With the default variable names you can reference the service principal as the following:
+
+```bash
+echo "My client id is $AZURE_CLIENT_ID"
+echo "My client secret is $AZURE_CLIENT_SECRET"
+echo "My tenant id is $AZURE_TENANT_ID"
+echo "My subscription id is $AZURE_SUBSCRIPTION_ID"
+```
+
+In pipelines, there're two ways to construct this binding:
 
 1.  With defaults, which will read specified service principal into four predefined environment variables: `AZURE_SUBSCRIPTION_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`. Sample pipeline code:
 
