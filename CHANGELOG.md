@@ -1,5 +1,8 @@
 # Azure Credentials Plugin Changelog
 
+## Version 1.4.1, 2018-02-08
+* Fix bugs at non-global clouds
+
 ## Version 1.4.0, 2017-12-21
 * Support Environment selection for MSI credentials
 
