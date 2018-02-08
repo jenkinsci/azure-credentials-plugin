@@ -681,6 +681,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                 @QueryParameter String clientSecret,
                 @QueryParameter String certificateId,
                 @QueryParameter String tenant,
+                @QueryParameter String azureEnvironmentName,
                 @QueryParameter String serviceManagementURL,
                 @QueryParameter String authenticationEndpoint,
                 @QueryParameter String resourceManagerEndpoint,
@@ -690,6 +691,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                     = new AzureCredentials.ServicePrincipal(subscriptionId, clientId, clientSecret);
             servicePrincipal.setCertificateId(certificateId);
             servicePrincipal.setTenant(tenant);
+            servicePrincipal.setAzureEnvironmentName(azureEnvironmentName);
             servicePrincipal.setManagementEndpoint(serviceManagementURL);
             servicePrincipal.setActiveDirectoryEndpoint(authenticationEndpoint);
             servicePrincipal.setResourceManagerEndpoint(resourceManagerEndpoint);
