@@ -11,14 +11,14 @@
     <version>1.4.1-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Azure Credentials</name>
-    <description>Manage Azure Service Principal credentials using Jenkins Credentials API</description>
+    <description>Manage Azure credentials using Jenkins Credentials API</description>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Azure+Credentials+plugin</url>
 
     <developers>
         <developer>
             <id>azure_devops</id>
             <name>Azure DevOps Team</name>
-            <email>vscjenkins@microsoft.com</email>
+            <email>azurejenkins@microsoft.com</email>
         </developer>
     </developers>
 
