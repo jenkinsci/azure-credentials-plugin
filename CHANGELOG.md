@@ -1,5 +1,8 @@
 # Azure Credentials Plugin Changelog
 
+## Version 1.6.0, 2018-03-29
+* Use scoped credentials lookup
+
 ## Version 1.5.0, 2018-02-09
 * Support for certificate based service principal
 * Fix the configuration verification bug on non-global clouds
