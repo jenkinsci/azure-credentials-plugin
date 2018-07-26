@@ -119,8 +119,9 @@ In pipelines, there're two ways to construct this binding:
 
 We use [Jenkins JIRA](https://issues.jenkins-ci.org/) to record all bugs and feature requests. Please follow beblow steps to create your own issues.
 
-1. Creating a new Jenkins account [here](https://accounts.jenkins.io/signup) if you don't have one.
-2. Browsing to [Jenkins JIRA](https://issues.jenkins-ci.org/) and login with your account.
-3. Creating a new issue with the component `azure-credentials-plugin` .
+1. Search in Jira to see if the issue was existed already.
+2. Create a new Jenkins account [here](https://accounts.jenkins.io/signup) if you don't have one.
+3. Browse to [Jenkins JIRA](https://issues.jenkins-ci.org/) and login with your account.
+4. Create a new issue with the component `azure-credentials-plugin` .
 
 You can refer to [Jira doc](https://confluence.atlassian.com/jiracoreserver/creating-issues-and-sub-tasks-939937904.html#Creatingissuesandsub-tasks-Creatinganissue) for detailed instructions about creating an issue.
