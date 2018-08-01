@@ -114,3 +114,12 @@ In pipelines, there're two ways to construct this binding:
         sh 'az login --service-principal -u $CLIENT_ID -p $CLIENT_SECRET -t $TENANT_ID'
     }
     ```
+
+## Reporting bugs and feature requests
+
+We use [Jenkins JIRA](https://issues.jenkins-ci.org/) to record all bugs and feature requests. Please follow beblow steps to create your own issues.
+
+1. Search in Jira to see if the issue was existed already.
+2. Create a new issue with the component `azure-credentials-plugin` .
+
+You can refer to [Jira doc](https://confluence.atlassian.com/jiracoreserver/creating-issues-and-sub-tasks-939937904.html#Creatingissuesandsub-tasks-Creatinganissue) for detailed instructions about creating an issue.
