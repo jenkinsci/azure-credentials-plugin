@@ -2,23 +2,17 @@ package com.microsoft.azure.util;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
-import com.microsoft.azure.AzureEnvironment;
 import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 import hudson.Extension;
 import hudson.util.ListBoxModel;
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.util.Map;
-
-public class AzureMsiCredentials extends AzureBaseCredentials {
-
+@Deprecated
+public class AzureMsiCredentials extends AbstractManagedIdentitiesCredentials {
     public static final int DEFAULT_MSI_PORT = 50342;
     private static final long serialVersionUID = 1L;
 
     private final int msiPort;
-    private String azureEnvName;
-    private transient AzureEnvironment azureEnvironment;
 
     @Deprecated
     public AzureMsiCredentials(CredentialsScope scope, String id, String description, int msiPort) {
@@ -30,49 +24,12 @@ public class AzureMsiCredentials extends AzureBaseCredentials {
                                String azureEnvName) {
         super(scope, id, description);
         this.msiPort = msiPort;
-        this.azureEnvName = azureEnvName;
-        azureEnvironment = AzureEnvUtil.resolveAzureEnv(azureEnvName);
-    }
-
-    private Object readResolve() {
-        if (StringUtils.isEmpty(azureEnvName)) {
-            this.azureEnvName = AzureEnvUtil.Constants.ENV_AZURE;
-        }
-        azureEnvironment = AzureEnvUtil.resolveAzureEnv(azureEnvName);
-        return this;
+        setAzureEnvName(azureEnvName);
+        setAzureEnvironment(AzureEnvUtil.resolveAzureEnv(azureEnvName));
     }
 
     public int getMsiPort() {
         return msiPort;
-    }
-
-    private AzureEnvironment getAzureEnvironment() {
-        return azureEnvironment;
-    }
-
-    public String getAzureEnvName() {
-        return azureEnvName;
-    }
-
-    @Override
-    public String getAzureEnvironmentName() {
-        return azureEnvName;
-    }
-
-    public String getManagementEndpoint() {
-        return azureEnvironment.managementEndpoint();
-    }
-
-    public String getActiveDirectoryEndpoint() {
-        return azureEnvironment.activeDirectoryEndpoint();
-    }
-
-    public String getResourceManagerEndpoint() {
-        return azureEnvironment.resourceManagerEndpoint();
-    }
-
-    public String getGraphEndpoint() {
-        return azureEnvironment.graphEndpoint();
     }
 
     @Override
@@ -83,17 +40,13 @@ public class AzureMsiCredentials extends AzureBaseCredentials {
         return token;
     }
 
-    public Map<String, String> getEndpoints() {
-        return azureEnvironment.endpoints();
-    }
-
     @Extension
     public static class DescriptorImpl
             extends BaseStandardCredentials.BaseStandardCredentialsDescriptor {
 
         @Override
         public String getDisplayName() {
-            return "Microsoft Azure Managed Service Identity";
+            return "Microsoft Azure Managed Service Identity (deprecated)";
         }
 
         public int getDefaultMsiPort() {

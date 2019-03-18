@@ -49,6 +49,16 @@ public final class AzureCredentialUtil {
                 CredentialsMatchers.withId(credentialId));
         if (credential != null) {
             return credential;
+        }
+        credential = CredentialsMatchers.firstOrNull(
+                CredentialsProvider.lookupCredentials(
+                        AzureImdsCredentials.class,
+                        Jenkins.getInstance(),
+                        ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList()),
+                CredentialsMatchers.withId(credentialId));
+        if (credential != null) {
+            return credential;
         } else {
             credential = CredentialsMatchers.firstOrNull(
                     CredentialsProvider.lookupCredentials(
