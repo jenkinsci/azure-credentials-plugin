@@ -1,5 +1,8 @@
 # Azure Credentials Plugin Changelog
 
+## Version 1.6.1, 2019-03-29
+* Support managed identities for Azure resources
+
 ## Version 1.6.0, 2018-03-29
 * Use scoped credentials lookup
 
