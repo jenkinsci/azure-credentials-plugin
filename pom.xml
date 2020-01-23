@@ -7,7 +7,7 @@
     </parent>
 
     <artifactId>azure-credentials</artifactId>
-    <version>1.6.2-SNAPSHOT</version>
+    <version>2.0.0</version>
     <packaging>hpi</packaging>
     <name>Azure Credentials</name>
     <description>Manage Azure credentials using Jenkins Credentials API</description>
@@ -25,7 +25,7 @@
         <connection>scm:git:ssh://git@github.com/jenkinsci/azure-credentials-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/azure-credentials-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/azure-credentials-plugin</url>
-        <tag>HEAD</tag>
+        <tag>azure-credentials-2.0.0</tag>
     </scm>
 
     <properties>
