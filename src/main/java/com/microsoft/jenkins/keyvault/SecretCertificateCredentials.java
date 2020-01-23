@@ -41,10 +41,10 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
     public SecretCertificateCredentials(CredentialsScope scope,
                                         String id,
                                         String description,
-                                        String servicePrincipalId,
+                                        String credentialId,
                                         String secretIdentifier,
                                         Secret password) {
-        super(scope, id, description, servicePrincipalId, secretIdentifier);
+        super(scope, id, description, credentialId, secretIdentifier);
         this.password = password;
     }
 

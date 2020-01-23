@@ -8,14 +8,18 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;
 import com.microsoft.azure.AzureEnvironment;
 import com.microsoft.azure.credentials.ApplicationTokenCredentials;
+import com.microsoft.azure.keyvault.authentication.KeyVaultCredentials;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.resources.Subscription;
 import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
+import com.microsoft.jenkins.keyvault.KeyVaultClientAuthenticator;
+import com.microsoft.jenkins.keyvault.KeyVaultImdsAuthenticator;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.security.ACL;
@@ -496,6 +500,44 @@ public class AzureCredentials extends AzureBaseCredentials {
             return new AzureCredentials.ServicePrincipal();
         }
         return creds.data;
+    }
+
+    public static KeyVaultCredentials getCredentialById(String credentialId) {
+        AzureCredentials azureCredentials = CredentialsMatchers.firstOrNull(
+                CredentialsProvider.lookupCredentials(
+                        AzureCredentials.class,
+                        Jenkins.getInstance(),
+                        ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList()),
+                CredentialsMatchers.withId(credentialId));
+        if (azureCredentials != null) {
+            return new KeyVaultClientAuthenticator(azureCredentials.getClientId(),
+                    azureCredentials.getClientSecret());
+        }
+
+        UsernamePasswordCredentials usernamePasswordCredentials = CredentialsMatchers.firstOrNull(
+                CredentialsProvider.lookupCredentials(
+                        UsernamePasswordCredentials.class,
+                        Jenkins.getInstance(),
+                        ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList()),
+                CredentialsMatchers.withId(credentialId));
+        if (usernamePasswordCredentials != null) {
+            return new KeyVaultClientAuthenticator(usernamePasswordCredentials.getUsername(),
+                    usernamePasswordCredentials.getPassword().getPlainText());
+        }
+
+        AzureImdsCredentials imdsCredentials = CredentialsMatchers.firstOrNull(
+                CredentialsProvider.lookupCredentials(
+                        AzureImdsCredentials.class,
+                        Jenkins.getInstance(),
+                        ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList()),
+                CredentialsMatchers.withId(credentialId));
+        if (imdsCredentials != null) {
+            return new KeyVaultImdsAuthenticator();
+        }
+        throw new RuntimeException(String.format("Credential: %s was not found", credentialId));
     }
 
     public String getSubscriptionId() {
