@@ -66,7 +66,9 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
                 KeyVaultCredentials keyVaultCredentials = AzureCredentials.getCredentialById(pCredentialId);
                 final KeyVaultClient client = new KeyVaultClient(keyVaultCredentials);
 
-                return client.getSecret(aSecretIdentifier);
+                SecretBundle secret = client.getSecret(aSecretIdentifier);
+                client.httpClient().connectionPool().evictAll();
+                return secret;
             }
         };
     }
