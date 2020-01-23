@@ -23,9 +23,9 @@ public class SecretStringCredentials extends BaseSecretCredentials implements St
     public SecretStringCredentials(CredentialsScope scope,
                                    String id,
                                    String description,
-                                   String servicePrincipalId,
+                                   String credentialId,
                                    String secretIdentifier) {
-        super(scope, id, description, servicePrincipalId, secretIdentifier);
+        super(scope, id, description, credentialId, secretIdentifier);
     }
 
     @Nonnull

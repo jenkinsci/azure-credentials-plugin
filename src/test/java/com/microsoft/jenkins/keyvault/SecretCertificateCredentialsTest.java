@@ -36,8 +36,8 @@ public class SecretCertificateCredentialsTest {
         }
 
         @Override
-        public SecretBundle getKeyVaultSecret(String servicePrincipalId, String secretIdentifier) {
-            Assert.assertEquals("spId", servicePrincipalId);
+        public SecretBundle getKeyVaultSecret(String credentialId, String secretIdentifier) {
+            Assert.assertEquals("spId", credentialId);
             Assert.assertEquals("secretId", secretIdentifier);
 
             final SecretBundle secretBundle = new SecretBundle();

@@ -10,6 +10,7 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.microsoft.azure.keyvault.KeyVaultClient;
+import com.microsoft.azure.keyvault.authentication.KeyVaultCredentials;
 import com.microsoft.azure.keyvault.models.SecretBundle;
 import com.microsoft.azure.util.AzureCredentials;
 import hudson.model.Item;
@@ -21,22 +22,22 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
     private static final long serialVersionUID = 1L;
 
     private transient SecretGetter secretGetter;
-    private final String servicePrincipalId;
+    private final String credentialId;
     private final String secretIdentifier;
 
     public BaseSecretCredentials(CredentialsScope scope,
                                  String id,
                                  String description,
-                                 String servicePrincipalId,
+                                 String credentialId,
                                  String secretIdentifier) {
         super(scope, id, description);
         this.secretGetter = SecretGetter.DEFAULT;
-        this.servicePrincipalId = servicePrincipalId;
+        this.credentialId = credentialId;
         this.secretIdentifier = secretIdentifier;
     }
 
-    public String getServicePrincipalId() {
-        return this.servicePrincipalId;
+    public String getCredentialId() {
+        return this.credentialId;
     }
 
     public String getSecretIdentifier() {
@@ -47,7 +48,7 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
         if (this.secretGetter == null) {
             this.secretGetter = SecretGetter.DEFAULT;
         }
-        return this.secretGetter.getKeyVaultSecret(servicePrincipalId, secretIdentifier);
+        return this.secretGetter.getKeyVaultSecret(credentialId, secretIdentifier);
     }
 
     @VisibleForTesting
@@ -56,17 +57,14 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
     }
 
     interface SecretGetter {
-        SecretBundle getKeyVaultSecret(String aServicePrincipalId, String aSecretIdentifier);
+        SecretBundle getKeyVaultSecret(String pCredentialId, String aSecretIdentifier);
 
         SecretGetter DEFAULT = new SecretGetter() {
 
             @Override
-            public SecretBundle getKeyVaultSecret(String aServicePrincipalId, String aSecretIdentifier) {
-                final AzureCredentials.ServicePrincipal servicePrincipal =
-                        AzureCredentials.getServicePrincipal(aServicePrincipalId);
-
-                final KeyVaultClient client = new KeyVaultClient(new KeyVaultClientAuthenticator(
-                        servicePrincipal.getClientId(), servicePrincipal.getClientSecret()));
+            public SecretBundle getKeyVaultSecret(String pCredentialId, String aSecretIdentifier) {
+                KeyVaultCredentials keyVaultCredentials = AzureCredentials.getCredentialById(pCredentialId);
+                final KeyVaultClient client = new KeyVaultClient(keyVaultCredentials);
 
                 return client.getSecret(aSecretIdentifier);
             }

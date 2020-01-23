@@ -23,8 +23,8 @@ public class SecretStringCredentialsTest {
     public void getSecret() {
         final BaseSecretCredentials.SecretGetter secretGetter = new BaseSecretCredentials.SecretGetter() {
             @Override
-            public SecretBundle getKeyVaultSecret(String servicePrincipalId, String secretIdentifier) {
-                Assert.assertEquals("spId", servicePrincipalId);
+            public SecretBundle getKeyVaultSecret(String credentialId, String secretIdentifier) {
+                Assert.assertEquals("spId", credentialId);
                 Assert.assertEquals("secretId", secretIdentifier);
 
                 final SecretBundle secretBundle = new SecretBundle();
