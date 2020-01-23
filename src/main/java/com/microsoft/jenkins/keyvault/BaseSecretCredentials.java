@@ -36,6 +36,14 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
         this.secretIdentifier = secretIdentifier;
     }
 
+    /**
+     * @deprecated use {@link #getCredentialId()}
+     */
+    @Deprecated
+    public String getServicePrincipalId() {
+        return this.credentialId;
+    }
+
     public String getCredentialId() {
         return this.credentialId;
     }
