@@ -1,5 +1,9 @@
 # Azure Credentials Plugin Changelog
 
+## Version 2.0.0, 2020-01-23
+* Bump Jenkins version to 2.60.3
+* Support retrieving key vault items with more credentials type
+
 ## Version 1.6.1, 2019-03-29
 * Support managed identities for Azure resources
 
