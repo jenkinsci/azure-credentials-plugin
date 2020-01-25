@@ -511,8 +511,8 @@ public class AzureCredentials extends AzureBaseCredentials {
                         Collections.<DomainRequirement>emptyList()),
                 CredentialsMatchers.withId(credentialId));
         if (azureCredentials != null) {
-            return new KeyVaultClientAuthenticator(azureCredentials.getClientId(),
-                    azureCredentials.getClientSecret());
+            return new KeyVaultClientAuthenticator(azureCredentials.data.getClientId(),
+                    azureCredentials.data.getClientSecret());
         }
 
         UsernamePasswordCredentials usernamePasswordCredentials = CredentialsMatchers.firstOrNull(
