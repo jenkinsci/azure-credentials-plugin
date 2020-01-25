@@ -1,5 +1,8 @@
 # Azure Credentials Plugin Changelog
 
+## Version 2.0.1, 2020-01-25
+* Fix service principal secret for key vault credential
+
 ## Version 2.0.0, 2020-01-23
 * Bump Jenkins version to 2.60.3
 * Support retrieving key vault items with more credentials type
