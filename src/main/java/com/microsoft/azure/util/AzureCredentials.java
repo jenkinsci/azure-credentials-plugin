@@ -4,22 +4,24 @@
  */
 package com.microsoft.azure.util;
 
+import com.azure.core.credential.TokenCredential;
+import com.azure.core.http.HttpClient;
+import com.azure.core.http.netty.NettyAsyncHttpClientBuilder;
+import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.identity.ManagedIdentityCredentialBuilder;
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;
 import com.microsoft.azure.AzureEnvironment;
 import com.microsoft.azure.credentials.ApplicationTokenCredentials;
-import com.microsoft.azure.keyvault.authentication.KeyVaultCredentials;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.resources.Subscription;
-import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
-import com.microsoft.jenkins.keyvault.KeyVaultClientAuthenticator;
-import com.microsoft.jenkins.keyvault.KeyVaultImdsAuthenticator;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.security.ACL;
@@ -502,7 +504,20 @@ public class AzureCredentials extends AzureBaseCredentials {
         return creds.data;
     }
 
-    public static KeyVaultCredentials getCredentialById(String credentialId) {
+    public static SecretClient createKeyVaultClient(TokenCredential credential, String keyVaultUrl) {
+        // Jenkins class loader prevents the built in auto-detection from working
+        // need to pass an explicit http client
+        HttpClient httpClient = new NettyAsyncHttpClientBuilder().build();
+
+        return new SecretClientBuilder()
+                .vaultUrl(keyVaultUrl)
+                .credential(credential)
+                .httpClient(httpClient)
+                .buildClient();
+    }
+
+
+    public static TokenCredential getCredentialById(String credentialId) {
         AzureCredentials azureCredentials = CredentialsMatchers.firstOrNull(
                 CredentialsProvider.lookupCredentials(
                         AzureCredentials.class,
@@ -511,20 +526,11 @@ public class AzureCredentials extends AzureBaseCredentials {
                         Collections.<DomainRequirement>emptyList()),
                 CredentialsMatchers.withId(credentialId));
         if (azureCredentials != null) {
-            return new KeyVaultClientAuthenticator(azureCredentials.data.getClientId(),
-                    azureCredentials.data.getClientSecret());
-        }
-
-        UsernamePasswordCredentials usernamePasswordCredentials = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(
-                        UsernamePasswordCredentials.class,
-                        Jenkins.getInstance(),
-                        ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList()),
-                CredentialsMatchers.withId(credentialId));
-        if (usernamePasswordCredentials != null) {
-            return new KeyVaultClientAuthenticator(usernamePasswordCredentials.getUsername(),
-                    usernamePasswordCredentials.getPassword().getPlainText());
+            return new ClientSecretCredentialBuilder()
+                    .clientId(azureCredentials.getClientId())
+                    .clientSecret(azureCredentials.getPlainClientSecret())
+                    .tenantId(azureCredentials.getTenant())
+                    .build();
         }
 
         AzureImdsCredentials imdsCredentials = CredentialsMatchers.firstOrNull(
@@ -535,7 +541,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                         Collections.<DomainRequirement>emptyList()),
                 CredentialsMatchers.withId(credentialId));
         if (imdsCredentials != null) {
-            return new KeyVaultImdsAuthenticator();
+            new ManagedIdentityCredentialBuilder().build();
         }
         throw new RuntimeException(String.format("Credential: %s was not found", credentialId));
     }
@@ -684,19 +690,6 @@ public class AzureCredentials extends AzureBaseCredentials {
     @Override
     public String getGraphEndpoint() {
         return data.graphEndpoint;
-    }
-
-    @Override
-    public TokenCredentialData createToken() {
-        TokenCredentialData token = super.createToken();
-        token.setType(TokenCredentialData.TYPE_SP);
-        token.setClientId(getClientId());
-        token.setClientSecret(getPlainClientSecret());
-        token.setCertificateBytes(data.getCertificateBytes());
-        token.setCertificatePassword(data.getCertificatePassword());
-        token.setTenant(getTenant());
-        token.setSubscriptionId(getSubscriptionId());
-        return token;
     }
 
     @DataBoundSetter

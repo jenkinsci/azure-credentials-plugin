@@ -2,7 +2,6 @@ package com.microsoft.azure.util;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
-import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 import hudson.Extension;
 import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -30,14 +29,6 @@ public class AzureMsiCredentials extends AbstractManagedIdentitiesCredentials {
 
     public int getMsiPort() {
         return msiPort;
-    }
-
-    @Override
-    public TokenCredentialData createToken() {
-        TokenCredentialData token = super.createToken();
-        token.setType(TokenCredentialData.TYPE_MSI);
-        token.setMsiPort(msiPort);
-        return token;
     }
 
     @Extension
