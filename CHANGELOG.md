@@ -1,5 +1,8 @@
 # Azure Credentials Plugin Changelog
 
+## Version 2.0.2, 2020-03-24
+* Upgrade Azure SDK dependency to version 1.31.0
+
 ## Version 2.0.1, 2020-01-25
 * Fix service principal secret for key vault credential
 
