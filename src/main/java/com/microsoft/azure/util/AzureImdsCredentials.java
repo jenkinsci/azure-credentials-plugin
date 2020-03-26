@@ -2,6 +2,7 @@ package com.microsoft.azure.util;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
+import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 import hudson.Extension;
 import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -18,6 +19,13 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
         super(scope, id, description);
         setAzureEnvName(azureEnvName);
         setAzureEnvironment(AzureEnvUtil.resolveAzureEnv(azureEnvName));
+    }
+
+    @Override
+    public TokenCredentialData createToken() {
+        TokenCredentialData token = super.createToken();
+        token.setType(TokenCredentialData.TYPE_IMDS);
+        return token;
     }
 
     @Extension

@@ -22,6 +22,7 @@ import com.microsoft.azure.AzureEnvironment;
 import com.microsoft.azure.credentials.ApplicationTokenCredentials;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.resources.Subscription;
+import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.security.ACL;
@@ -691,6 +692,20 @@ public class AzureCredentials extends AzureBaseCredentials {
     public String getGraphEndpoint() {
         return data.graphEndpoint;
     }
+
+    @Override
+    public TokenCredentialData createToken() {
+        TokenCredentialData token = super.createToken();
+        token.setType(TokenCredentialData.TYPE_SP);
+        token.setClientId(getClientId());
+        token.setClientSecret(getPlainClientSecret());
+        token.setCertificateBytes(data.getCertificateBytes());
+        token.setCertificatePassword(data.getCertificatePassword());
+        token.setTenant(getTenant());
+        token.setSubscriptionId(getSubscriptionId());
+        return token;
+    }
+
 
     @DataBoundSetter
     public void setGraphEndpoint(String graphEndpoint) {
