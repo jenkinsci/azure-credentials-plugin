@@ -706,7 +706,6 @@ public class AzureCredentials extends AzureBaseCredentials {
         return token;
     }
 
-
     @DataBoundSetter
     public void setGraphEndpoint(String graphEndpoint) {
         this.data.setGraphEndpoint(graphEndpoint);
