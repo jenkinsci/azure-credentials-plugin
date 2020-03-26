@@ -73,7 +73,7 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
     @NonNull
     @Override
     public KeyStore getKeyStore() {
-        final KeyVaultSecret secretBundle = getKeyVaultSecret();
+        final KeyVaultSecret secret = getKeyVaultSecret();
 
         KeyStore keyStore;
         try {
@@ -83,7 +83,7 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
         }
 
         try {
-            final byte[] content = Base64.decodeBase64(secretBundle.getValue());
+            final byte[] content = Base64.decodeBase64(secret.getValue());
             keyStore.load(new ByteArrayInputStream(content), toCharArray(password));
         } catch (CertificateException | NoSuchAlgorithmException | IOException e) {
             final LogRecord lr = new LogRecord(Level.WARNING, "Credentials ID {0}: Could not load keystore from {1}");
