@@ -33,7 +33,7 @@
         <changelist>-SNAPSHOT</changelist>
         <jenkins.version>2.164.3</jenkins.version>
         <java.level>8</java.level>
-        <azuresdk.version>1.19.0</azuresdk.version>
+        <azuresdk.version>1.31.0</azuresdk.version>
         <azure-commons.version>1.0.4</azure-commons.version>
         <hpi.compatibleSinceVersion>2.1</hpi.compatibleSinceVersion>
     </properties>
@@ -155,7 +155,7 @@
             <dependency>
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>azure-annotations</artifactId>
-                <version>1.8.0</version>
+                <version>1.10.0</version>
             </dependency>
             <dependency>
                 <groupId>com.google.code.gson</groupId>
