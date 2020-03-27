@@ -542,7 +542,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                         Collections.<DomainRequirement>emptyList()),
                 CredentialsMatchers.withId(credentialId));
         if (imdsCredentials != null) {
-            new ManagedIdentityCredentialBuilder().build();
+            return new ManagedIdentityCredentialBuilder().build();
         }
         throw new RuntimeException(String.format("Credential: %s was not found", credentialId));
     }
