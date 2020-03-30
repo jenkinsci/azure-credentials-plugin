@@ -5,12 +5,13 @@
 
 package com.microsoft.jenkins.keyvault.integration;
 
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.microsoft.azure.keyvault.models.SecretBundle;
 import com.microsoft.jenkins.keyvault.Messages;
 import com.microsoft.jenkins.keyvault.SecretCertificateCredentials;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -26,9 +27,9 @@ public class ITSecretCertificateCredentials extends KeyVaultIntegrationTestBase 
 
     @Test
     public void getKeyStore() throws IOException, KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
-        final String cert= IOUtils.toString(getClass().getResourceAsStream("../cert.pfx.b64"), "UTF-8");
-        final SecretBundle secretBundle = createSecret("secret-cert", cert);
-        final String secretIdentifier = secretBundle.secretIdentifier().toString();
+        final String cert= IOUtils.toString(getClass().getResourceAsStream("../cert.pfx.b64"), StandardCharsets.UTF_8);
+        final KeyVaultSecret secretBundle = createSecret("secret-cert", cert);
+        final String secretIdentifier = secretBundle.getId();
         final Secret password = Secret.fromString("123456");
 
         // Verify configuration
@@ -72,10 +73,9 @@ public class ITSecretCertificateCredentials extends KeyVaultIntegrationTestBase 
 
     @Test
     public void getKeyStoreNoPrivateKey() throws IOException {
-        final String cert = IOUtils.toString(getClass().getResourceAsStream("../cert_no_private.pfx.b64"), "UTF-8");
-        final SecretBundle secretBundle = createSecret("secret-cert-no-private", cert);
-        final String secretIdentifier = secretBundle.secretIdentifier().toString();
-        final Secret password = Secret.fromString("");
+        final String cert = IOUtils.toString(getClass().getResourceAsStream("../cert_no_private.pfx.b64"), StandardCharsets.UTF_8);
+        final KeyVaultSecret secretBundle = createSecret("secret-cert-no-private", cert);
+        final String secretIdentifier = secretBundle.getId().toString();
 
         // Verify configuration
         final SecretCertificateCredentials.DescriptorImpl descriptor = new SecretCertificateCredentials.DescriptorImpl();

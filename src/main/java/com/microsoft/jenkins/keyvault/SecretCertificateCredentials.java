@@ -4,9 +4,9 @@
  */
 package com.microsoft.jenkins.keyvault;
 
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
-import com.microsoft.azure.keyvault.models.SecretBundle;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.Util;
@@ -41,10 +41,10 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
     public SecretCertificateCredentials(CredentialsScope scope,
                                         String id,
                                         String description,
-                                        String credentialId,
+                                        String servicePrincipalId,
                                         String secretIdentifier,
                                         Secret password) {
-        super(scope, id, description, credentialId, secretIdentifier);
+        super(scope, id, description, servicePrincipalId, secretIdentifier);
         this.password = password;
     }
 
@@ -73,7 +73,7 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
     @NonNull
     @Override
     public KeyStore getKeyStore() {
-        final SecretBundle secretBundle = getKeyVaultSecret();
+        final KeyVaultSecret secret = getKeyVaultSecret();
 
         KeyStore keyStore;
         try {
@@ -83,7 +83,7 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
         }
 
         try {
-            final byte[] content = Base64.decodeBase64(secretBundle.value());
+            final byte[] content = Base64.decodeBase64(secret.getValue());
             keyStore.load(new ByteArrayInputStream(content), toCharArray(password));
         } catch (CertificateException | NoSuchAlgorithmException | IOException e) {
             final LogRecord lr = new LogRecord(Level.WARNING, "Credentials ID {0}: Could not load keystore from {1}");

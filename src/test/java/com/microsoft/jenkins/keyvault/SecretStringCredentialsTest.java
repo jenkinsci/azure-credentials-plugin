@@ -5,8 +5,8 @@
 
 package com.microsoft.jenkins.keyvault;
 
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.microsoft.azure.keyvault.models.SecretBundle;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
 import org.junit.Assert;
@@ -23,12 +23,11 @@ public class SecretStringCredentialsTest {
     public void getSecret() {
         final BaseSecretCredentials.SecretGetter secretGetter = new BaseSecretCredentials.SecretGetter() {
             @Override
-            public SecretBundle getKeyVaultSecret(String credentialId, String secretIdentifier) {
+            public KeyVaultSecret getKeyVaultSecret(String credentialId, String secretIdentifier) {
                 Assert.assertEquals("spId", credentialId);
                 Assert.assertEquals("secretId", secretIdentifier);
 
-                final SecretBundle secretBundle = new SecretBundle();
-                secretBundle.withValue("Secret");
+                final KeyVaultSecret secretBundle = new KeyVaultSecret("name", "Secret");
 
                 return secretBundle;
             }

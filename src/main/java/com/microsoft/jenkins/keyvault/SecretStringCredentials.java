@@ -4,8 +4,8 @@
  */
 package com.microsoft.jenkins.keyvault;
 
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.microsoft.azure.keyvault.models.SecretBundle;
 import hudson.Extension;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
@@ -23,16 +23,16 @@ public class SecretStringCredentials extends BaseSecretCredentials implements St
     public SecretStringCredentials(CredentialsScope scope,
                                    String id,
                                    String description,
-                                   String credentialId,
+                                   String servicePrincipalId,
                                    String secretIdentifier) {
-        super(scope, id, description, credentialId, secretIdentifier);
+        super(scope, id, description, servicePrincipalId, secretIdentifier);
     }
 
     @Nonnull
     @Override
     public Secret getSecret() {
-        final SecretBundle secretBundle = getKeyVaultSecret();
-        return Secret.fromString(secretBundle.value());
+        final KeyVaultSecret secretBundle = getKeyVaultSecret();
+        return Secret.fromString(secretBundle.getValue());
     }
 
     @Extension

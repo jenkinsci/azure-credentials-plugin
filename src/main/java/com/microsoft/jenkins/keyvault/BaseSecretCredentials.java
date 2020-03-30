@@ -5,17 +5,19 @@
 
 package com.microsoft.jenkins.keyvault;
 
+import com.azure.core.credential.TokenCredential;
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.google.common.annotations.VisibleForTesting;
-import com.microsoft.azure.keyvault.KeyVaultClient;
-import com.microsoft.azure.keyvault.authentication.KeyVaultCredentials;
-import com.microsoft.azure.keyvault.models.SecretBundle;
 import com.microsoft.azure.util.AzureCredentials;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class BaseSecretCredentials extends BaseStandardCredentials {
 
@@ -52,7 +54,7 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
         return this.secretIdentifier;
     }
 
-    protected SecretBundle getKeyVaultSecret() {
+    protected KeyVaultSecret getKeyVaultSecret() {
         if (this.secretGetter == null) {
             this.secretGetter = SecretGetter.DEFAULT;
         }
@@ -65,18 +67,35 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
     }
 
     interface SecretGetter {
-        SecretBundle getKeyVaultSecret(String pCredentialId, String aSecretIdentifier);
+        KeyVaultSecret getKeyVaultSecret(String pCredentialId, String aSecretIdentifier);
 
+        int NAME_POSITION = 2;
+        int VERSION_POSITION = 3;
         SecretGetter DEFAULT = new SecretGetter() {
 
             @Override
-            public SecretBundle getKeyVaultSecret(String pCredentialId, String aSecretIdentifier) {
-                KeyVaultCredentials keyVaultCredentials = AzureCredentials.getCredentialById(pCredentialId);
-                final KeyVaultClient client = new KeyVaultClient(keyVaultCredentials);
+            public KeyVaultSecret getKeyVaultSecret(String pCredentialId, String aSecretIdentifier) {
+                TokenCredential keyVaultCredentials = AzureCredentials.getCredentialById(pCredentialId);
+                SecretClient client;
+                URL secretIdentifierUrl;
+                try {
+                    secretIdentifierUrl = new URL(aSecretIdentifier);
+                    client = AzureCredentials.createKeyVaultClient(
+                            keyVaultCredentials,
+                            "https://" + secretIdentifierUrl.getHost());
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
 
-                SecretBundle secret = client.getSecret(aSecretIdentifier);
-                client.httpClient().connectionPool().evictAll();
-                return secret;
+                // old SDK supports secret identifier which is a full URI to the secret
+                // the new SDK doesn't seem to support it to we parse it to get the values we need
+                // https://mine.vault.azure.net/secrets/<name>/<version>
+                String[] split = secretIdentifierUrl.getPath().split("/");
+
+                if (split.length == NAME_POSITION + 1) {
+                    return client.getSecret(split[NAME_POSITION]);
+                }
+                return client.getSecret(split[NAME_POSITION], split[VERSION_POSITION]);
             }
         };
     }
