@@ -223,13 +223,6 @@ public class AzureCredentials extends AzureBaseCredentials {
             }
         }
 
-        public String getEncryptTenant() {
-            if (tenant == null || StringUtils.isBlank(tenant.getPlainText())) {
-                return "";
-            }
-            return tenant.getEncryptedValue();
-        }
-
         public String getAzureEnvironmentName() {
             return azureEnvironmentName;
         }
@@ -555,24 +548,10 @@ public class AzureCredentials extends AzureBaseCredentials {
     }
 
     public String getSubscriptionId() {
-        if (StringUtils.isEmpty(data.subscriptionId.getPlainText())) {
-            return "";
-        }
-        return data.subscriptionId.getEncryptedValue();
-    }
-
-    public String getPlainSubscriptionId() {
         return data.subscriptionId.getPlainText();
     }
 
     public String getClientId() {
-        if (StringUtils.isEmpty(data.clientId.getPlainText())) {
-            return "";
-        }
-        return data.clientId.getEncryptedValue();
-    }
-
-    public String getPlainClientId() {
         return data.clientId.getPlainText();
     }
 
@@ -597,10 +576,6 @@ public class AzureCredentials extends AzureBaseCredentials {
     }
 
     public String getTenant() {
-        return data.getEncryptTenant();
-    }
-
-    public String getPlainTenant() {
         return data.getTenant();
     }
 
@@ -722,12 +697,12 @@ public class AzureCredentials extends AzureBaseCredentials {
     public TokenCredentialData createToken() {
         TokenCredentialData token = super.createToken();
         token.setType(TokenCredentialData.TYPE_SP);
-        token.setClientId(getPlainClientId());
+        token.setClientId(getClientId());
         token.setClientSecret(getPlainClientSecret());
         token.setCertificateBytes(data.getCertificateBytes());
         token.setCertificatePassword(data.getCertificatePassword());
-        token.setTenant(getPlainTenant());
-        token.setSubscriptionId(getPlainSubscriptionId());
+        token.setTenant(getTenant());
+        token.setSubscriptionId(getSubscriptionId());
         return token;
     }
 
