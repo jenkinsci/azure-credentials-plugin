@@ -5,24 +5,23 @@
 
 package com.microsoft.jenkins.keyvault.integration;
 
+import com.azure.identity.ClientSecretCredential;
+import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
-import com.microsoft.azure.keyvault.KeyVaultClient;
-import com.microsoft.azure.keyvault.models.SecretBundle;
-import com.microsoft.azure.keyvault.requests.SetSecretRequest;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.keyvault.Vault;
 import com.microsoft.azure.util.AzureCredentials;
 import com.microsoft.jenkins.integration.IntegrationTestBase;
-import com.microsoft.jenkins.keyvault.KeyVaultClientAuthenticator;
-import org.junit.Assert;
-import org.junit.Before;
-
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import org.junit.Assert;
+import org.junit.Before;
 
 public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
 
@@ -90,14 +89,17 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
         Assert.fail("Key vault still not available after timeout.");
     }
 
-    protected SecretBundle createSecret(final String name, final String value) {
-        final KeyVaultClient client = new KeyVaultClient(new KeyVaultClientAuthenticator(
-                testEnv.clientId, testEnv.clientSecret));
+    protected KeyVaultSecret createSecret(final String name, final String value) {
+        KeyVaultSecret keyVaultSecret = new KeyVaultSecret(name, value);
 
-        final SetSecretRequest.Builder secretBuilder = new SetSecretRequest.Builder(
-                vaultUri, name, value);
+        ClientSecretCredential clientSecretCredential = new ClientSecretCredentialBuilder()
+                .clientId(testEnv.clientId)
+                .clientSecret(testEnv.clientSecret)
+                .tenantId(testEnv.tenantId)
+                .build();
 
-        return client.setSecret(secretBuilder.build());
+        SecretClient secretClient = AzureCredentials.createKeyVaultClient(clientSecretCredential, vaultUri);
+        return secretClient.setSecret(keyVaultSecret);
     }
 
 }

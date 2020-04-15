@@ -5,8 +5,8 @@
 
 package com.microsoft.jenkins.keyvault.integration;
 
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.microsoft.azure.keyvault.models.SecretBundle;
 import com.microsoft.jenkins.keyvault.SecretStringCredentials;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
@@ -17,8 +17,8 @@ public class ITSecretStringCredentials extends KeyVaultIntegrationTestBase {
 
     @Test
     public void getSecret() {
-        final SecretBundle secretBundle = createSecret("secret-string", "I'm secret");
-        final String secretIdentifier = secretBundle.secretIdentifier().toString();
+        final KeyVaultSecret secretBundle = createSecret("secret-string", "I'm secret");
+        final String secretIdentifier = secretBundle.getId();
 
         // Verify configuration
         final SecretStringCredentials.DescriptorImpl descriptor = new SecretStringCredentials.DescriptorImpl();
