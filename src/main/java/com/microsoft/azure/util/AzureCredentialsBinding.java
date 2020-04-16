@@ -132,10 +132,10 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
             throws IOException, InterruptedException {
         AzureCredentials credentials = getCredentials(build);
         Map<String, String> map = new HashMap<>();
-        map.put(getSubscriptionIdVariable(), credentials.getSubscriptionId());
-        map.put(getClientIdVariable(), credentials.getClientId());
+        map.put(getSubscriptionIdVariable(), credentials.getSubscriptionId().getPlainText());
+        map.put(getClientIdVariable(), credentials.getClientId().getPlainText());
         map.put(getClientSecretVariable(), credentials.getPlainClientSecret());
-        map.put(getTenantIdVariable(), credentials.getTenant());
+        map.put(getTenantIdVariable(), credentials.getPlainTenant());
         return new MultiEnvironment(map);
     }
 
