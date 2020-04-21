@@ -1,5 +1,8 @@
 # Azure Credentials Plugin Changelog
 
+## Version 3.0.1, 2020-04-21
+* Encrypt Service Principal subscriptionId, tenant, clientId 
+
 ## Version 3.0.0, 2020-03-30
 * Upgrade Azure-SDK dependency to Azure-security-keyvault-secrets
 * Fix compatibility issue with azure-keyvault
