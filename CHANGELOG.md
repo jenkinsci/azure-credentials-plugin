@@ -1,5 +1,8 @@
 # Azure Credentials Plugin Changelog
 
+## Version 4.0.0, 2020-04-23
+* Encrypt subscriptionId, tenant, clientId. SubscriptionId, tenant, clientId will be returned as ```Secret``` type.
+
 ## Version 3.0.1, 2020-04-21
 * Encrypt Service Principal subscriptionId, tenant, clientId 
 
