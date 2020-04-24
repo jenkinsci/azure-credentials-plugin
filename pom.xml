@@ -35,7 +35,7 @@
         <java.level>8</java.level>
         <azuresdk.version>1.31.0</azuresdk.version>
         <azure-commons.version>1.0.4</azure-commons.version>
-        <hpi.compatibleSinceVersion>2.1</hpi.compatibleSinceVersion>
+        <hpi.compatibleSinceVersion>4.0.0</hpi.compatibleSinceVersion>
     </properties>
 
     <licenses>
