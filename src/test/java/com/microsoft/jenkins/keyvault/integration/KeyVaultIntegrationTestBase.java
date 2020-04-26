@@ -20,8 +20,6 @@ import com.microsoft.jenkins.integration.IntegrationTestBase;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-
-import hudson.util.Secret;
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -55,8 +53,8 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
                 CredentialsScope.SYSTEM,
                 jenkinsAzureCredentialsId,
                 "",
-                Secret.fromString(testEnv.subscriptionId),
-                Secret.fromString(testEnv.clientId),
+                testEnv.subscriptionId,
+                testEnv.clientId,
                 testEnv.clientSecret);
         credentials.setOauth2TokenEndpoint("http://host/" + testEnv.tenantId + "/oauth2");
 

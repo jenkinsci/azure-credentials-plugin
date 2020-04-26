@@ -295,8 +295,8 @@ public class AzureCredentials extends AzureBaseCredentials {
             }
         }
 
-        void setTenant(Secret tenant) {
-            this.tenant = tenant;
+        void setTenant(String tenant) {
+            this.tenant = Secret.fromString(tenant);
             if (StringUtils.isNotBlank(this.tenant.getPlainText())) {
                 this.oauth2TokenEndpoint = null;
             }
@@ -335,11 +335,11 @@ public class AzureCredentials extends AzureBaseCredentials {
         }
 
         public ServicePrincipal(
-                Secret subscriptionId,
-                Secret clientId,
+                String subscriptionId,
+                String clientId,
                 String clientSecret) {
-            this.subscriptionId = subscriptionId;
-            this.clientId = clientId;
+            this.subscriptionId = Secret.fromString(subscriptionId);
+            this.clientId = Secret.fromString(clientId);
             this.clientSecret = Secret.fromString(clientSecret);
             this.tenant = Secret.fromString("");
         }
@@ -457,8 +457,8 @@ public class AzureCredentials extends AzureBaseCredentials {
             CredentialsScope scope,
             String id,
             String description,
-            Secret subscriptionId,
-            Secret clientId,
+            String subscriptionId,
+            String clientId,
             String clientSecret) {
         super(scope, id, description);
         data = new ServicePrincipal(subscriptionId, clientId, clientSecret);
@@ -472,8 +472,8 @@ public class AzureCredentials extends AzureBaseCredentials {
             CredentialsScope scope,
             String id,
             String description,
-            Secret subscriptionId,
-            Secret clientId,
+            String subscriptionId,
+            String clientId,
             String clientSecret,
             String oauth2TokenEndpoint,
             String serviceManagementURL,
@@ -482,7 +482,7 @@ public class AzureCredentials extends AzureBaseCredentials {
             String graphEndpoint) {
         super(scope, id, description);
         data = new ServicePrincipal(subscriptionId, clientId, clientSecret);
-        data.setTenant(Secret.fromString(ServicePrincipal.getTenantFromTokenEndpoint(oauth2TokenEndpoint)));
+        data.setTenant(ServicePrincipal.getTenantFromTokenEndpoint(oauth2TokenEndpoint));
         data.setManagementEndpoint(serviceManagementURL);
         data.setActiveDirectoryEndpoint(authenticationEndpoint);
         data.setResourceManagerEndpoint(resourceManagerEndpoint);
@@ -528,9 +528,9 @@ public class AzureCredentials extends AzureBaseCredentials {
                 CredentialsMatchers.withId(credentialId));
         if (azureCredentials != null) {
             return new ClientSecretCredentialBuilder()
-                    .clientId(azureCredentials.getClientId().getPlainText())
+                    .clientId(azureCredentials.getClientId())
                     .clientSecret(azureCredentials.getPlainClientSecret())
-                    .tenantId(azureCredentials.getPlainTenant())
+                    .tenantId(azureCredentials.getTenant())
                     .build();
         }
 
@@ -547,12 +547,12 @@ public class AzureCredentials extends AzureBaseCredentials {
         throw new RuntimeException(String.format("Credential: %s was not found", credentialId));
     }
 
-    public Secret getSubscriptionId() {
-        return data.subscriptionId;
+    public String getSubscriptionId() {
+        return data.subscriptionId.getPlainText();
     }
 
-    public Secret getClientId() {
-        return data.clientId;
+    public String getClientId() {
+        return data.clientId.getPlainText();
     }
 
     public String getClientSecret() {
@@ -575,16 +575,12 @@ public class AzureCredentials extends AzureBaseCredentials {
         return data.getCertificateId();
     }
 
-    public Secret getTenant() {
-        return data.tenant;
-    }
-
-    protected String getPlainTenant() {
+    public String getTenant() {
         return data.getTenant();
     }
 
     @DataBoundSetter
-    public void setTenant(Secret tenant) {
+    public void setTenant(String tenant) {
         this.data.setTenant(tenant);
     }
 
@@ -701,12 +697,12 @@ public class AzureCredentials extends AzureBaseCredentials {
     public TokenCredentialData createToken() {
         TokenCredentialData token = super.createToken();
         token.setType(TokenCredentialData.TYPE_SP);
-        token.setClientId(getClientId().getPlainText());
+        token.setClientId(getClientId());
         token.setClientSecret(getPlainClientSecret());
         token.setCertificateBytes(data.getCertificateBytes());
         token.setCertificatePassword(data.getCertificatePassword());
-        token.setTenant(getPlainTenant());
-        token.setSubscriptionId(getSubscriptionId().getPlainText());
+        token.setTenant(getTenant());
+        token.setSubscriptionId(getSubscriptionId());
         return token;
     }
 
@@ -729,11 +725,11 @@ public class AzureCredentials extends AzureBaseCredentials {
         }
 
         public FormValidation doVerifyConfiguration(
-                @QueryParameter Secret subscriptionId,
-                @QueryParameter Secret clientId,
+                @QueryParameter String subscriptionId,
+                @QueryParameter String clientId,
                 @QueryParameter String clientSecret,
                 @QueryParameter String certificateId,
-                @QueryParameter Secret tenant,
+                @QueryParameter String tenant,
                 @QueryParameter String azureEnvironmentName,
                 @QueryParameter String serviceManagementURL,
                 @QueryParameter String authenticationEndpoint,
