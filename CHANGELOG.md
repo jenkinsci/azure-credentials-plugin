@@ -1,5 +1,12 @@
 # Azure Credentials Plugin Changelog
 
+## Version 4.0.2, 2020-04-26
+NOTES:
+* Please ignore v3.0.1, v4.0.0, v4.0.1. These versions are not compatible with other Azure-plugins.
+
+BUG FIXES:
+* Fix compatibility issue with other azure-plugins.
+
 ## Version 4.0.1, 2020-04-24
 * Update ```compatibleSinceVersion``` to v4.0.0
 
