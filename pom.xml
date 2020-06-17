@@ -101,7 +101,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>19.0</version>
+            <version>24.1.1-jre</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
