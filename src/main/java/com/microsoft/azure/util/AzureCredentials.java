@@ -6,6 +6,7 @@ package com.microsoft.azure.util;
 
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.http.HttpClient;
+import com.azure.core.http.ProxyOptions;
 import com.azure.core.http.netty.NettyAsyncHttpClientBuilder;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.identity.ManagedIdentityCredentialBuilder;
@@ -24,6 +25,7 @@ import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.resources.Subscription;
 import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 import hudson.Extension;
+import hudson.ProxyConfiguration;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
@@ -38,6 +40,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nullable;
 import java.io.ObjectStreamException;
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -508,7 +511,13 @@ public class AzureCredentials extends AzureBaseCredentials {
     public static SecretClient createKeyVaultClient(TokenCredential credential, String keyVaultUrl) {
         // Jenkins class loader prevents the built in auto-detection from working
         // need to pass an explicit http client
-        HttpClient httpClient = new NettyAsyncHttpClientBuilder().build();
+        ProxyConfiguration proxy = Jenkins.get().proxy;
+        ProxyOptions proxyOptions = null;
+        if (proxy != null) {
+            proxyOptions = new ProxyOptions(ProxyOptions.Type.HTTP, new InetSocketAddress(proxy.name, proxy.port));
+            proxyOptions.setCredentials(proxy.getUserName(), proxy.getPassword());
+        }
+        HttpClient httpClient = new NettyAsyncHttpClientBuilder().proxy(proxyOptions).build();
 
         return new SecretClientBuilder()
                 .vaultUrl(keyVaultUrl)
