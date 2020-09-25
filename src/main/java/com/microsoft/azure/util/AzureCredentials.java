@@ -428,7 +428,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                     }
                 }
             } catch (Exception e) {
-                throw new ValidationException(Messages.Azure_CantValidate());
+                throw new ValidationException(Messages.Azure_CantValidate() + ": " + e.getMessage());
             }
             throw new ValidationException(Messages.Azure_Invalid_SubscriptionId());
         }
