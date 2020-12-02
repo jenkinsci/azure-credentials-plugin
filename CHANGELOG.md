@@ -1,5 +1,8 @@
 # Azure Credentials Plugin Changelog
 
+## Version 4.0.4, 2020-12-02
+* Move document to GitHub
+
 ## Version 4.0.3, 2020-10-26
 * Update maintainer
 
