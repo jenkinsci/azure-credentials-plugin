@@ -1,5 +1,54 @@
 # Azure Credentials plugin
 
+> ***Important***: This plugin is being retired and will be out of support as of February 29, 2024. Azure CLI is the currently recommended way to integrate Jenkins with Azure services.
+
+## Using Credentials Binding and Az CLI
+
+[Credentials Binding](https://plugins.jenkins.io/credentials-binding/) and Az CLI is the recommended way to integrate with Azure services.
+
+1. Make sure you have [Az CLI installed](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli), version 2.0.67 or higher.
+2. Create a service principal using Az CLI:
+
+    ```bash
+        az ad sp create-for-rbac
+    ```
+
+3. Make sure the [Credentials plugin](https://plugins.jenkins.io/credentials/) is installed and add a credential in Jenkins Credentials page.
+
+    Ensure that the credential kind is ***Username with password*** and enter the following items:
+    * Username - The ***appId*** of the service principal created for authentication with your ACR registry.
+    * Password - The ***password*** of the service principal created for authentication with your ACR registry.
+    * ID - Credential identifier such as AzureServicePrincipal
+
+    Sample Jenkinsfile (declarative pipeline)
+
+    ```groovy
+    pipeline {
+        agent any
+
+        environment {
+            AZURE_SUBSCRIPTION_ID='99999999-9999-9999-9999-999999999999'
+            AZURE_TENANT_ID='99999999-9999-9999-9999-999999999999'
+        }
+
+        stages {
+            stage('Example') {
+                steps {
+                       withCredentials([usernamePassword(credentialsId: 'myAzureCredential', passwordVariable: 'AZURE_CLIENT_SECRET', usernameVariable: 'AZURE_CLIENT_ID')]) {
+                                sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
+                                sh 'az account set -s $AZURE_SUBSCRIPTION_ID'
+                                sh 'az ...'
+                            }
+                }
+            }
+        }
+    }
+    ```
+
+---
+
+## About this plugin
+
 Jenkins plugin to manage Azure credentials.
 
 * [General information on how to use credentials in Jenkins](https://wiki.jenkins-ci.org/display/JENKINS/Credentials+Plugin)
