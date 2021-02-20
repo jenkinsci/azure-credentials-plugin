@@ -1,5 +1,8 @@
 # Azure Credentials Plugin Changelog
 
+## Version 4.0.6, 2021-02-20
+* Update document 
+
 ## Version 4.0.5, 2020-12-02
 * Added proxy support
 

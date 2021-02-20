@@ -1,5 +1,54 @@
 # Azure Credentials plugin
 
+> ***Important***: This plugin is being retired and will be out of support as of February 29, 2024. Azure CLI is the currently recommended way to integrate Jenkins with Azure services.
+
+## Using Credentials Binding and Az CLI
+
+[Credentials Binding](https://plugins.jenkins.io/credentials-binding/) and Az CLI is the recommended way to integrate with Azure services.
+
+1. Make sure you have [Az CLI installed](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli), version 2.0.67 or higher.
+2. Create a service principal using Az CLI:
+
+    ```bash
+        az ad sp create-for-rbac
+    ```
+
+3. Make sure the [Credentials plugin](https://plugins.jenkins.io/credentials/) is installed and add a credential in Jenkins Credentials page.
+
+   Ensure that the credential kind is ***Username with password*** and enter the following items:
+    * Username - The ***appId*** of the service principal created.
+    * Password - The ***password*** of the service principal created.
+    * ID - Credential identifier such as AzureServicePrincipal
+
+   Sample Jenkinsfile (declarative pipeline)
+
+    ```groovy
+    pipeline {
+        agent any
+
+        environment {
+            AZURE_SUBSCRIPTION_ID='99999999-9999-9999-9999-999999999999'
+            AZURE_TENANT_ID='99999999-9999-9999-9999-999999999999'
+        }
+
+        stages {
+            stage('Example') {
+                steps {
+                       withCredentials([usernamePassword(credentialsId: 'myAzureCredential', passwordVariable: 'AZURE_CLIENT_SECRET', usernameVariable: 'AZURE_CLIENT_ID')]) {
+                                sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID'
+                                sh 'az account set -s $AZURE_SUBSCRIPTION_ID'
+                                sh 'az ...'
+                            }
+                }
+            }
+        }
+    }
+    ```
+
+---
+
+## About this plugin
+
 Jenkins plugin to manage Azure credentials.
 
 * [General information on how to use credentials in Jenkins](https://wiki.jenkins-ci.org/display/JENKINS/Credentials+Plugin)
@@ -8,8 +57,8 @@ It supports the following Azure credential types:
 
 1. [Azure Service Principal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal),
    with the following authentication mechanism:
-   * Client secret
-   * Certificate (Add the certificate to Jenkins credentials store and reference it in the Azure Service Principal configuration)
+    * Client secret
+    * Certificate (Add the certificate to Jenkins credentials store and reference it in the Azure Service Principal configuration)
 1. [Azure Managed Service Identity (MSI)](https://docs.microsoft.com/en-us/azure/active-directory/msi-overview)
 1. [Credentials In Azure Key Vault](https://docs.microsoft.com/en-us/azure/key-vault/key-vault-get-started)
 
@@ -82,7 +131,7 @@ CredentialsProvider.lookupCredentials(AzureBaseCredentials.class, null, ACL.SYST
 
 ## Using AzureCredentials in the job (freestyle / pipeline)
 
-Custom binding for AzureCredentials to support reading Azure service principal in both freestyle and pipeline using Credentials Binding plugin. 
+Custom binding for AzureCredentials to support reading Azure service principal in both freestyle and pipeline using Credentials Binding plugin.
 
 In freestyle jobs, click `Use secret text(s) or file(s)` in the `Build Environment` in the configuration page and add a `Microsoft Azure Service Principal` item, which allows you add credential bindings where the *Variable* value will be used as the name of the environment variable that your build can use to access the value of the credential. With the default variable names you can reference the service principal as the following:
 
