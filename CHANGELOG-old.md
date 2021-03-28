@@ -1,5 +1,7 @@
 # Azure Credentials Plugin Changelog
 
+See [GitHub releases](https://github.com/jenkinsci/azure-credentials-plugin/releases) for all newer versions.
+
 ## Version 4.0.6, 2021-02-20
 * Update document 
 
