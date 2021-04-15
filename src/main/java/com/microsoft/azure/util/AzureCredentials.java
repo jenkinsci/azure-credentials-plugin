@@ -23,7 +23,6 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;
-import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.ProxyConfiguration;
@@ -448,7 +447,7 @@ public class AzureCredentials extends AzureBaseCredentials {
             String clientId,
             String clientSecret) {
         super(scope, id, description);
-        data = new ServicePrincipal(subscriptionId, clientId, clientSecret);
+        data = new ServicePrincipal(subscriptionId, clientId, Secret.fromString(clientSecret));
     }
 
     @DataBoundConstructor
@@ -480,7 +479,7 @@ public class AzureCredentials extends AzureBaseCredentials {
             String resourceManagerEndpoint,
             String graphEndpoint) {
         super(scope, id, description);
-        data = new ServicePrincipal(subscriptionId, clientId, clientSecret);
+        data = new ServicePrincipal(subscriptionId, clientId, Secret.fromString(clientSecret));
         data.setTenant(ServicePrincipal.getTenantFromTokenEndpoint(oauth2TokenEndpoint));
         data.setManagementEndpoint(serviceManagementURL);
         data.setActiveDirectoryEndpoint(authenticationEndpoint);
@@ -525,8 +524,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                 }
             }
         }
-        HttpClient httpClient = new NettyAsyncHttpClientBuilder().proxy(proxyOptions).build();
-        return httpClient;
+        return new NettyAsyncHttpClientBuilder().proxy(proxyOptions).build();
     }
 
 
@@ -706,19 +704,6 @@ public class AzureCredentials extends AzureBaseCredentials {
         return data.graphEndpoint;
     }
 
-    @Override
-    public TokenCredentialData createToken() {
-        TokenCredentialData token = super.createToken();
-        token.setType(TokenCredentialData.TYPE_SP);
-        token.setClientId(getClientId());
-        token.setClientSecret(getPlainClientSecret());
-        token.setCertificateBytes(data.getCertificateBytes());
-        token.setCertificatePassword(data.getCertificatePassword());
-        token.setTenant(getTenant());
-        token.setSubscriptionId(getSubscriptionId());
-        return token;
-    }
-
     @DataBoundSetter
     public void setGraphEndpoint(String graphEndpoint) {
         this.data.setGraphEndpoint(graphEndpoint);
@@ -751,7 +736,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                 @QueryParameter String graphEndpoint) {
 
             AzureCredentials.ServicePrincipal servicePrincipal
-                    = new AzureCredentials.ServicePrincipal(subscriptionId, clientId, clientSecret);
+                    = new AzureCredentials.ServicePrincipal(subscriptionId, clientId, Secret.fromString(clientSecret));
             servicePrincipal.setCertificateId(certificateId);
             servicePrincipal.setTenant(tenant);
             servicePrincipal.setAzureEnvironmentName(azureEnvironmentName);

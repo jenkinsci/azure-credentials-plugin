@@ -8,12 +8,11 @@ import com.azure.resourcemanager.AzureResourceManager;
 import com.azure.resourcemanager.resources.models.Subscription;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
-import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 import hudson.Extension;
 import hudson.Util;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -32,14 +31,6 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
         super(scope, id, description);
         setAzureEnvName(azureEnvName);
         setAzureEnvironment(AzureEnvUtil.resolveAzureEnv(azureEnvName));
-    }
-
-    @Override
-    public TokenCredentialData createToken() {
-        TokenCredentialData token = super.createToken();
-        token.setType(TokenCredentialData.TYPE_IMDS);
-        token.setSubscriptionId(getSubscriptionId());
-        return token;
     }
 
     public String getSubscriptionId() {
