@@ -5,11 +5,13 @@
 
 package com.microsoft.jenkins.integration;
 
-import com.microsoft.azure.AzureEnvironment;
-import com.microsoft.azure.CloudException;
-import com.microsoft.azure.credentials.ApplicationTokenCredentials;
-import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.resources.fluentcore.arm.Region;
+import com.azure.core.credential.TokenCredential;
+import com.azure.core.management.AzureEnvironment;
+import com.azure.core.management.Region;
+import com.azure.core.management.exception.ManagementException;
+import com.azure.core.management.profile.AzureProfile;
+import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.resourcemanager.AzureResourceManager;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -79,20 +81,26 @@ public abstract class IntegrationTestBase {
     @AfterClass
     public static void tearDownClass() {
         try {
-            final Azure azureClient = getAzureClient();
+            final AzureResourceManager azureClient = getAzureClient();
             azureClient.resourceGroups().deleteByNameAsync(testEnv.resourceGroup);
-        } catch (CloudException e) {
-            if (e.response().code() != 404) {
+        } catch (ManagementException e) {
+            if (e.getResponse().getStatusCode() != 404) {
                 throw e;
             }
         }
     }
 
-    protected static Azure getAzureClient() {
-        final ApplicationTokenCredentials azureTokenCredentials = new ApplicationTokenCredentials(
-                testEnv.clientId, testEnv.tenantId, testEnv.clientSecret, AzureEnvironment.AZURE);
-        return Azure.configure()
-                .authenticate(azureTokenCredentials)
+    protected static AzureResourceManager getAzureClient() {
+        final TokenCredential credential = new ClientSecretCredentialBuilder()
+                .clientId(testEnv.clientId)
+                .clientSecret(testEnv.clientSecret)
+                .tenantId(testEnv.tenantId)
+                .build();
+
+        AzureProfile profile = new AzureProfile(AzureEnvironment.AZURE);
+
+        return AzureResourceManager
+                .authenticate(credential, profile)
                 .withSubscription(testEnv.subscriptionId);
     }
 

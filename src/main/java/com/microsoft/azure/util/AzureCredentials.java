@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See LICENSE file in the project root for license information.
  */
@@ -8,22 +8,23 @@ import com.azure.core.credential.TokenCredential;
 import com.azure.core.http.HttpClient;
 import com.azure.core.http.ProxyOptions;
 import com.azure.core.http.netty.NettyAsyncHttpClientBuilder;
+import com.azure.core.management.AzureEnvironment;
+import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.identity.ManagedIdentityCredentialBuilder;
+import com.azure.identity.implementation.IdentityClientOptions;
+import com.azure.resourcemanager.AzureResourceManager;
+import com.azure.resourcemanager.resources.models.Subscription;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;
-import com.microsoft.azure.AzureEnvironment;
-import com.microsoft.azure.credentials.ApplicationTokenCredentials;
-import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.resources.Subscription;
 import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.ProxyConfiguration;
 import hudson.model.Item;
@@ -32,6 +33,7 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
+import jenkins.util.JenkinsJVM;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -39,17 +41,20 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nullable;
+import java.io.ByteArrayInputStream;
 import java.io.ObjectStreamException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 public class AzureCredentials extends AzureBaseCredentials {
     public static class ValidationException extends Exception {
 
         public ValidationException(String message) {
             super(message);
+        }
+
+        public ValidationException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 
@@ -93,40 +98,6 @@ public class AzureCredentials extends AzureBaseCredentials {
          * defined.
          */
         private Object readResolve() throws ObjectStreamException {
-            if (StringUtils.isNotBlank(azureEnvironmentName)) {
-                // we have already migrated to the latest format, skip the resolving.
-                return this;
-            }
-
-            Map<String, AzureEnvironment> environmentMap = new HashMap<>();
-            environmentMap.put(AzureEnvUtil.Constants.ENV_AZURE, AzureEnvironment.AZURE);
-            environmentMap.put(AzureEnvUtil.Constants.ENV_AZURE_CHINA, AzureEnvironment.AZURE_CHINA);
-            environmentMap.put(AzureEnvUtil.Constants.ENV_AZURE_GERMANY, AzureEnvironment.AZURE_GERMANY);
-            environmentMap.put(AzureEnvUtil.Constants.ENV_AZURE_US_GOVERNMENT, AzureEnvironment.AZURE_US_GOVERNMENT);
-
-            // If the environment name is not recognized, which may happen when the user upgraded the plugin
-            // and didn't update the credentials, we try to match a known environment.
-            boolean matched = false;
-            for (Map.Entry<String, AzureEnvironment> entry : environmentMap.entrySet()) {
-                if (matchEnvironment(entry.getValue())) {
-                    azureEnvironmentName = entry.getKey();
-
-                    // user hasn't modified the default endpoint URL's, so we clear them so as to pick up the defaults
-                    // in the environments.
-                    serviceManagementURL = null;
-                    authenticationEndpoint = null;
-                    resourceManagerEndpoint = null;
-                    graphEndpoint = null;
-
-                    matched = true;
-                    break;
-                }
-            }
-
-            if (!matched) {
-                azureEnvironmentName = AzureEnvUtil.Constants.ENV_AZURE;
-            }
-
             return this;
         }
 
@@ -171,9 +142,6 @@ public class AzureCredentials extends AzureBaseCredentials {
          * <li><code>certificateId</code> is empty or the given certificate is not found.</li>
          * </ul>
          * <p>
-         * Note: Azure {@link ApplicationTokenCredentials} requires the raw bytes of the whole certificate, rather than
-         * the key(s) returned from the KeyStore. We need to return {@link CertificateCredentialsImpl} which has the
-         * <code>getKeyStoreSource()</code> method that returns the raw certificate.
          *
          * @return the certificate configured in the Service Principal.
          */
@@ -185,14 +153,13 @@ public class AzureCredentials extends AzureBaseCredentials {
             if (StringUtils.isEmpty(certificateId)) {
                 return null;
             }
-            CertificateCredentialsImpl certificate = CredentialsMatchers.firstOrNull(
+            return CredentialsMatchers.firstOrNull(
                     CredentialsProvider.lookupCredentials(
                             CertificateCredentialsImpl.class,
-                            Jenkins.getInstance(),
+                            Jenkins.get(),
                             ACL.SYSTEM,
-                            Collections.<DomainRequirement>emptyList()),
+                            Collections.emptyList()),
                     CredentialsMatchers.withId(certificateId));
-            return certificate;
         }
 
         @Nullable
@@ -259,7 +226,7 @@ public class AzureCredentials extends AzureBaseCredentials {
 
         public String getManagementEndpoint() {
             AzureEnvironment env = getAzureEnvironment();
-            return env.managementEndpoint();
+            return env.getManagementEndpoint();
         }
 
         /**
@@ -272,17 +239,17 @@ public class AzureCredentials extends AzureBaseCredentials {
 
         public String getActiveDirectoryEndpoint() {
             AzureEnvironment env = getAzureEnvironment();
-            return env.activeDirectoryEndpoint();
+            return env.getActiveDirectoryEndpoint();
         }
 
         public String getResourceManagerEndpoint() {
             AzureEnvironment env = getAzureEnvironment();
-            return env.resourceManagerEndpoint();
+            return env.getResourceManagerEndpoint();
         }
 
         public String getGraphEndpoint() {
             AzureEnvironment env = getAzureEnvironment();
-            return env.graphEndpoint();
+            return env.getGraphEndpoint();
         }
 
         /**
@@ -330,21 +297,22 @@ public class AzureCredentials extends AzureBaseCredentials {
             this.azureEnvironment = null;
         }
 
-        private boolean matchEnvironment(AzureEnvironment env) {
-            return !AzureEnvUtil.isOverridden(env.managementEndpoint(), serviceManagementURL)
-                    && !AzureEnvUtil.isOverridden(env.resourceManagerEndpoint(), resourceManagerEndpoint)
-                    && !AzureEnvUtil.isOverridden(env.activeDirectoryEndpoint(), authenticationEndpoint)
-                    && !AzureEnvUtil.isOverridden(env.graphEndpoint(), graphEndpoint);
+        public ServicePrincipal(
+                String subscriptionId,
+                String clientId,
+                Secret clientSecret) {
+            this.subscriptionId = Secret.fromString(subscriptionId);
+            this.clientId = Secret.fromString(clientId);
+            this.clientSecret = clientSecret;
+            this.tenant = Secret.fromString("");
         }
 
+        @Deprecated
         public ServicePrincipal(
                 String subscriptionId,
                 String clientId,
                 String clientSecret) {
-            this.subscriptionId = Secret.fromString(subscriptionId);
-            this.clientId = Secret.fromString(clientId);
-            this.clientSecret = Secret.fromString(clientSecret);
-            this.tenant = Secret.fromString("");
+            this(subscriptionId, clientId, Secret.fromString(clientSecret));
         }
 
         /**
@@ -402,36 +370,52 @@ public class AzureCredentials extends AzureBaseCredentials {
             try {
                 final String credentialSubscriptionId = getSubscriptionId();
 
-                Azure.Authenticated auth;
+                AzureProfile profile = new AzureProfile(getAzureEnvironment());
+                TokenCredential credential;
 
                 if (StringUtils.isEmpty(secret)) {
                     CertificateCredentialsImpl certificate = getCertificate();
                     if (certificate == null) {
                         throw new ValidationException(Messages.Azure_ClientCertificate_NotFound());
                     }
-                    byte[] certificateBytes = certificate.getKeyStoreSource().getKeyStoreBytes();
-                    auth = Azure.authenticate(
-                            new ApplicationTokenCredentials(
-                                    getClientId(),
-                                    getTenant(),
-                                    certificateBytes,
-                                    certificate.getPassword().getPlainText(),
-                                    getAzureEnvironment()));
+                    ByteArrayInputStream certificateBytes = new ByteArrayInputStream(
+                            certificate.getKeyStoreSource().getKeyStoreBytes()
+                    );
+
+                    IdentityClientOptions identityClientOptions = new IdentityClientOptions();
+                    identityClientOptions.setHttpClient(getHttpClient());
+
+                    credential = new ClientCertificateCredential2(
+                            getTenant(),
+                            getClientId(),
+                            null,
+                            // this is package-private in the default sdk method which is why we have our own class
+                            certificateBytes,
+                            certificate.getPassword().getPlainText(),
+                            identityClientOptions);
                 } else {
-                    auth = Azure.authenticate(
-                            new ApplicationTokenCredentials(
-                                    getClientId(),
-                                    getTenant(),
-                                    getClientSecret(),
-                                    getAzureEnvironment()));
+                    credential = new ClientSecretCredentialBuilder()
+                            .authorityHost(profile.getEnvironment().getActiveDirectoryEndpoint())
+                            .clientId(getClientId())
+                            .clientSecret(getClientSecret())
+                            .tenantId(getTenant())
+                            .httpClient(getHttpClient())
+                            .build();
                 }
-                for (Subscription subscription : auth.subscriptions().list()) {
+
+                AzureResourceManager azure = AzureResourceManager
+                        .configure()
+                        .withHttpClient(getHttpClient())
+                        .authenticate(credential, profile)
+                        .withSubscription(subscriptionId.getPlainText());
+
+                for (Subscription subscription : azure.subscriptions().list()) {
                     if (subscription.subscriptionId().equalsIgnoreCase(credentialSubscriptionId)) {
                         return true;
                     }
                 }
             } catch (Exception e) {
-                throw new ValidationException(Messages.Azure_CantValidate() + ": " + e.getMessage());
+                throw new ValidationException(Messages.Azure_CantValidate() + ": " + e.getMessage(), e);
             }
             throw new ValidationException(Messages.Azure_Invalid_SubscriptionId());
         }
@@ -440,7 +424,7 @@ public class AzureCredentials extends AzureBaseCredentials {
 
         private static String getTenantFromTokenEndpoint(String oauth2TokenEndpoint) {
             if (!oauth2TokenEndpoint.matches(
-                    "https{0,1}://[a-zA-Z0-9\\.]*/[a-z0-9\\-]*/?.*$")) {
+                    "https{0,1}://[a-zA-Z0-9.]*/[a-z0-9\\-]*/?.*$")) {
                 return "";
             } else {
                 String[] parts = oauth2TokenEndpoint.split("/");
@@ -455,7 +439,7 @@ public class AzureCredentials extends AzureBaseCredentials {
 
     private final ServicePrincipal data;
 
-    @DataBoundConstructor
+    @Deprecated
     public AzureCredentials(
             CredentialsScope scope,
             String id,
@@ -463,6 +447,18 @@ public class AzureCredentials extends AzureBaseCredentials {
             String subscriptionId,
             String clientId,
             String clientSecret) {
+        super(scope, id, description);
+        data = new ServicePrincipal(subscriptionId, clientId, clientSecret);
+    }
+
+    @DataBoundConstructor
+    public AzureCredentials(
+            CredentialsScope scope,
+            String id,
+            String description,
+            String subscriptionId,
+            String clientId,
+            Secret clientSecret) {
         super(scope, id, description);
         data = new ServicePrincipal(subscriptionId, clientId, clientSecret);
     }
@@ -500,7 +496,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                         AzureCredentials.class,
                         Jenkins.getInstance(),
                         ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList()),
+                        Collections.emptyList()),
                 CredentialsMatchers.withId(credentialsId));
         if (creds == null) {
             return new AzureCredentials.ServicePrincipal();
@@ -509,21 +505,28 @@ public class AzureCredentials extends AzureBaseCredentials {
     }
 
     public static SecretClient createKeyVaultClient(TokenCredential credential, String keyVaultUrl) {
-        // Jenkins class loader prevents the built in auto-detection from working
-        // need to pass an explicit http client
-        ProxyConfiguration proxy = Jenkins.get().proxy;
-        ProxyOptions proxyOptions = null;
-        if (proxy != null) {
-            proxyOptions = new ProxyOptions(ProxyOptions.Type.HTTP, new InetSocketAddress(proxy.name, proxy.port));
-            proxyOptions.setCredentials(proxy.getUserName(), proxy.getPassword());
-        }
-        HttpClient httpClient = new NettyAsyncHttpClientBuilder().proxy(proxyOptions).build();
-
         return new SecretClientBuilder()
                 .vaultUrl(keyVaultUrl)
                 .credential(credential)
-                .httpClient(httpClient)
+                .httpClient(getHttpClient())
                 .buildClient();
+    }
+
+    public static HttpClient getHttpClient() {
+        // Jenkins class loader prevents the built in auto-detection from working
+        // need to pass an explicit http client
+        ProxyOptions proxyOptions = null;
+        if (JenkinsJVM.isJenkinsJVM()) {
+            ProxyConfiguration proxy = Jenkins.get().proxy;
+            if (proxy != null) {
+                proxyOptions = new ProxyOptions(ProxyOptions.Type.HTTP, new InetSocketAddress(proxy.name, proxy.port));
+                if (proxy.getSecretPassword() != null && !proxy.getSecretPassword().getPlainText().equals("")) {
+                    proxyOptions.setCredentials(proxy.getUserName(), proxy.getSecretPassword().getPlainText());
+                }
+            }
+        }
+        HttpClient httpClient = new NettyAsyncHttpClientBuilder().proxy(proxyOptions).build();
+        return httpClient;
     }
 
 
@@ -531,27 +534,28 @@ public class AzureCredentials extends AzureBaseCredentials {
         AzureCredentials azureCredentials = CredentialsMatchers.firstOrNull(
                 CredentialsProvider.lookupCredentials(
                         AzureCredentials.class,
-                        Jenkins.getInstance(),
+                        Jenkins.get(),
                         ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList()),
+                        Collections.emptyList()),
                 CredentialsMatchers.withId(credentialId));
         if (azureCredentials != null) {
             return new ClientSecretCredentialBuilder()
                     .clientId(azureCredentials.getClientId())
                     .clientSecret(azureCredentials.getPlainClientSecret())
                     .tenantId(azureCredentials.getTenant())
+                    .httpClient(getHttpClient())
                     .build();
         }
 
         AzureImdsCredentials imdsCredentials = CredentialsMatchers.firstOrNull(
                 CredentialsProvider.lookupCredentials(
                         AzureImdsCredentials.class,
-                        Jenkins.getInstance(),
+                        Jenkins.get(),
                         ACL.SYSTEM,
-                        Collections.<DomainRequirement>emptyList()),
+                        Collections.emptyList()),
                 CredentialsMatchers.withId(credentialId));
         if (imdsCredentials != null) {
-            return new ManagedIdentityCredentialBuilder().build();
+            return new ManagedIdentityCredentialBuilder().httpClient(getHttpClient()).build();
         }
         throw new RuntimeException(String.format("Credential: %s was not found", credentialId));
     }
@@ -729,6 +733,7 @@ public class AzureCredentials extends AzureBaseCredentials {
         }
 
         @Override
+        @NonNull
         public String getDisplayName() {
             return "Microsoft Azure Service Principal";
         }
@@ -757,7 +762,7 @@ public class AzureCredentials extends AzureBaseCredentials {
             try {
                 servicePrincipal.validate();
             } catch (ValidationException e) {
-                return FormValidation.error(e.getMessage());
+                return FormValidation.error(e, e.getMessage());
             }
 
             return FormValidation.ok(Messages.Azure_Config_Success());

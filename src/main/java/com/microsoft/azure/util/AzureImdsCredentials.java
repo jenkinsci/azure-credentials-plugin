@@ -1,11 +1,13 @@
 package com.microsoft.azure.util;
 
+import com.azure.core.http.rest.PagedIterable;
+import com.azure.core.management.profile.AzureProfile;
+import com.azure.identity.ManagedIdentityCredential;
+import com.azure.identity.ManagedIdentityCredentialBuilder;
+import com.azure.resourcemanager.AzureResourceManager;
+import com.azure.resourcemanager.resources.models.Subscription;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
-import com.microsoft.azure.PagedList;
-import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.resources.Subscription;
-import com.microsoft.jenkins.azurecommons.core.credentials.ImdsTokenCredentials;
 import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 import hudson.Extension;
 import hudson.Util;
@@ -53,11 +55,17 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
         try {
             final String credentialSubscriptionId = getSubscriptionId();
 
-            Azure.Authenticated auth = Azure.authenticate(
-                        new ImdsTokenCredentials(AzureEnvUtil.resolveAzureEnv(getAzureEnvName())));
-            PagedList<Subscription> list = auth.subscriptions().list();
+            AzureProfile profile = new AzureProfile(AzureEnvUtil.resolveAzureEnv(getAzureEnvName()));
+            ManagedIdentityCredential credential = new ManagedIdentityCredentialBuilder().build();
+            AzureResourceManager azure = AzureResourceManager
+                    .configure()
+                    .withHttpClient(AzureCredentials.getHttpClient())
+                    .authenticate(credential, profile)
+                    .withSubscription(credentialSubscriptionId);
+
+            PagedIterable<Subscription> subscriptions = azure.subscriptions().list();
             if (subscriptionId != null) {
-                for (Subscription subscription : list) {
+                for (Subscription subscription : subscriptions) {
                     if (subscription.subscriptionId().equalsIgnoreCase(credentialSubscriptionId)) {
                         return true;
                     }

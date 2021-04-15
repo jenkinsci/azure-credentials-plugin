@@ -1,6 +1,6 @@
 package com.microsoft.azure.util;
 
-import com.microsoft.azure.AzureEnvironment;
+import com.azure.core.management.AzureEnvironment;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;
@@ -11,14 +11,14 @@ public final class AzureEnvUtil {
         if (StringUtils.isBlank(stored)) {
             return false;
         }
-        String defaultValue = environment.endpoints().get(endpoint.identifier());
+        String defaultValue = environment.getEndpoints().get(endpoint.identifier());
         if (StringUtils.isBlank(defaultValue)) {
             // should not happen
-            environment.endpoints().put(endpoint.identifier(), stored);
+            environment.getEndpoints().put(endpoint.identifier(), stored);
             return true;
         }
         if (isOverridden(defaultValue, stored)) {
-            environment.endpoints().put(endpoint.identifier(), stored);
+            environment.getEndpoints().put(endpoint.identifier(), stored);
             return true;
         }
         return false;
@@ -47,7 +47,7 @@ public final class AzureEnvUtil {
         // may change the details of the built-in known environments.
         // The ideal fix should be applied in Azure SDK. Here we make a copy so that other plugins that calls this
         // method won't modify the known environments by accident.
-        return new AzureEnvironment(new HashMap<>(env.endpoints()));
+        return new AzureEnvironment(new HashMap<>(env.getEndpoints()));
     }
 
     public static class Constants {
