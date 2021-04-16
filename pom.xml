@@ -36,7 +36,7 @@
     <properties>
         <changelist>9999-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/azure-credentials-plugin</gitHubRepo>
-        <jenkins.version>2.263.1</jenkins.version>
+        <jenkins.version>2.277.2</jenkins.version>
         <java.level>8</java.level>
         <azuresdk.version>1.41.0</azuresdk.version>
         <hpi.compatibleSinceVersion>4.0.0</hpi.compatibleSinceVersion>
@@ -51,9 +51,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.azure.resourcemanager</groupId>
-            <artifactId>azure-resourcemanager</artifactId>
-            <version>2.3.0</version>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>azure-sdk</artifactId>
+            <version>9999-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -62,35 +62,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>plain-credentials</artifactId>
-        </dependency>
-
-        <!-- take care in updating the com.azure libs, their azure-core versions need to match -->
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-identity</artifactId>
-            <version>1.2.5</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-security-keyvault-secrets</artifactId>
-            <version>4.2.7</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>jackson2-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -102,7 +73,7 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.263.x</artifactId>
+                <artifactId>bom-2.277.x</artifactId>
                 <version>28</version>
                 <scope>import</scope>
                 <type>pom</type>

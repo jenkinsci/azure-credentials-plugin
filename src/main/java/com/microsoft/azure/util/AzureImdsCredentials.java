@@ -12,6 +12,7 @@ import hudson.Extension;
 import hudson.Util;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import io.jenkins.plugins.azuresdk.HttpClientRetriever;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -50,7 +51,7 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
             ManagedIdentityCredential credential = new ManagedIdentityCredentialBuilder().build();
             AzureResourceManager azure = AzureResourceManager
                     .configure()
-                    .withHttpClient(AzureCredentials.getHttpClient())
+                    .withHttpClient(HttpClientRetriever.get())
                     .authenticate(credential, profile)
                     .withSubscription(credentialSubscriptionId);
 

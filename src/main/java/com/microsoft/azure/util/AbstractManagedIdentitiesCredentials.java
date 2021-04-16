@@ -22,7 +22,7 @@ public abstract class AbstractManagedIdentitiesCredentials extends AzureBaseCred
         return azureEnvironment.getEndpoints();
     }
 
-    private AzureEnvironment getAzureEnvironment() {
+    public AzureEnvironment getAzureEnvironment() {
         return azureEnvironment;
     }
 

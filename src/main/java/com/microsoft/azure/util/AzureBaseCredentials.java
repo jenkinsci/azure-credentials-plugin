@@ -1,5 +1,6 @@
 package com.microsoft.azure.util;
 
+import com.azure.core.management.AzureEnvironment;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 
@@ -17,4 +18,8 @@ public abstract class AzureBaseCredentials extends BaseStandardCredentials {
     public abstract String getResourceManagerEndpoint();
 
     public abstract String getGraphEndpoint();
+
+    public abstract String getSubscriptionId();
+
+    public abstract AzureEnvironment getAzureEnvironment();
 }

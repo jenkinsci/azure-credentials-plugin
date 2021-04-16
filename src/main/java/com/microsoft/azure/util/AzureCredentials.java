@@ -5,9 +5,6 @@
 package com.microsoft.azure.util;
 
 import com.azure.core.credential.TokenCredential;
-import com.azure.core.http.HttpClient;
-import com.azure.core.http.ProxyOptions;
-import com.azure.core.http.netty.NettyAsyncHttpClientBuilder;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
@@ -25,14 +22,13 @@ import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
-import hudson.ProxyConfiguration;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import io.jenkins.plugins.azuresdk.HttpClientRetriever;
 import jenkins.model.Jenkins;
-import jenkins.util.JenkinsJVM;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -42,7 +38,6 @@ import org.kohsuke.stapler.QueryParameter;
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectStreamException;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 
 public class AzureCredentials extends AzureBaseCredentials {
@@ -382,7 +377,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                     );
 
                     IdentityClientOptions identityClientOptions = new IdentityClientOptions();
-                    identityClientOptions.setHttpClient(getHttpClient());
+                    identityClientOptions.setHttpClient(HttpClientRetriever.get());
 
                     credential = new ClientCertificateCredential2(
                             getTenant(),
@@ -398,13 +393,13 @@ public class AzureCredentials extends AzureBaseCredentials {
                             .clientId(getClientId())
                             .clientSecret(getClientSecret())
                             .tenantId(getTenant())
-                            .httpClient(getHttpClient())
+                            .httpClient(HttpClientRetriever.get())
                             .build();
                 }
 
                 AzureResourceManager azure = AzureResourceManager
                         .configure()
-                        .withHttpClient(getHttpClient())
+                        .withHttpClient(HttpClientRetriever.get())
                         .authenticate(credential, profile)
                         .withSubscription(subscriptionId.getPlainText());
 
@@ -507,57 +502,36 @@ public class AzureCredentials extends AzureBaseCredentials {
         return new SecretClientBuilder()
                 .vaultUrl(keyVaultUrl)
                 .credential(credential)
-                .httpClient(getHttpClient())
+                .httpClient(HttpClientRetriever.get())
                 .buildClient();
     }
 
-    public static HttpClient getHttpClient() {
-        // Jenkins class loader prevents the built in auto-detection from working
-        // need to pass an explicit http client
-        ProxyOptions proxyOptions = null;
-        if (JenkinsJVM.isJenkinsJVM()) {
-            ProxyConfiguration proxy = Jenkins.get().proxy;
-            if (proxy != null) {
-                proxyOptions = new ProxyOptions(ProxyOptions.Type.HTTP, new InetSocketAddress(proxy.name, proxy.port));
-                if (proxy.getSecretPassword() != null && !proxy.getSecretPassword().getPlainText().equals("")) {
-                    proxyOptions.setCredentials(proxy.getUserName(), proxy.getSecretPassword().getPlainText());
-                }
-            }
-        }
-        return new NettyAsyncHttpClientBuilder().proxy(proxyOptions).build();
-    }
+    public static TokenCredential getTokenCredential(AzureBaseCredentials credentials) {
+        if (credentials instanceof AzureCredentials) {
+            AzureCredentials azureCredentials = (AzureCredentials) credentials;
 
-
-    public static TokenCredential getCredentialById(String credentialId) {
-        AzureCredentials azureCredentials = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(
-                        AzureCredentials.class,
-                        Jenkins.get(),
-                        ACL.SYSTEM,
-                        Collections.emptyList()),
-                CredentialsMatchers.withId(credentialId));
-        if (azureCredentials != null) {
             return new ClientSecretCredentialBuilder()
                     .clientId(azureCredentials.getClientId())
                     .clientSecret(azureCredentials.getPlainClientSecret())
                     .tenantId(azureCredentials.getTenant())
-                    .httpClient(getHttpClient())
+                    .authorityHost(azureCredentials.getAzureEnvironment().getActiveDirectoryEndpoint())
+                    .httpClient(HttpClientRetriever.get())
                     .build();
         }
 
-        AzureImdsCredentials imdsCredentials = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(
-                        AzureImdsCredentials.class,
-                        Jenkins.get(),
-                        ACL.SYSTEM,
-                        Collections.emptyList()),
-                CredentialsMatchers.withId(credentialId));
-        if (imdsCredentials != null) {
-            return new ManagedIdentityCredentialBuilder().httpClient(getHttpClient()).build();
+        if (credentials instanceof AzureImdsCredentials) {
+            return new ManagedIdentityCredentialBuilder()
+                    .httpClient(HttpClientRetriever.get())
+                    .build();
         }
-        throw new RuntimeException(String.format("Credential: %s was not found", credentialId));
+        throw new RuntimeException(String.format("Unsupported credential: %s", credentials.getId()));
     }
 
+    public static TokenCredential getCredentialById(Item owner, String credentialId) {
+        return getTokenCredential(AzureCredentialUtil.getCredential(owner, credentialId));
+    }
+
+    @Override
     public String getSubscriptionId() {
         return data.subscriptionId.getPlainText();
     }
@@ -697,6 +671,11 @@ public class AzureCredentials extends AzureBaseCredentials {
     @DataBoundSetter
     public void setResourceManagerEndpoint(String resourceManagerEndpoint) {
         this.data.setResourceManagerEndpoint(resourceManagerEndpoint);
+    }
+
+    @Override
+    public AzureEnvironment getAzureEnvironment() {
+        return data.getAzureEnvironment();
     }
 
     @Override
