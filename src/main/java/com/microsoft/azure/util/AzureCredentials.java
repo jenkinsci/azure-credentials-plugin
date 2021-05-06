@@ -515,7 +515,9 @@ public class AzureCredentials extends AzureBaseCredentials {
         ProxyOptions proxyOptions = null;
         if (proxy != null) {
             proxyOptions = new ProxyOptions(ProxyOptions.Type.HTTP, new InetSocketAddress(proxy.name, proxy.port));
-            proxyOptions.setCredentials(proxy.getUserName(), proxy.getPassword());
+            if (proxy.getUserName() != null) {
+                proxyOptions.setCredentials(proxy.getUserName(), proxy.getPassword());
+            }
         }
         HttpClient httpClient = new NettyAsyncHttpClientBuilder().proxy(proxyOptions).build();
 
