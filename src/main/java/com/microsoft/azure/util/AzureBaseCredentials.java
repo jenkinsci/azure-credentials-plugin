@@ -1,8 +1,8 @@
 package com.microsoft.azure.util;
 
+import com.azure.core.management.AzureEnvironment;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
-import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 
 public abstract class AzureBaseCredentials extends BaseStandardCredentials {
     public AzureBaseCredentials(CredentialsScope scope, String id, String description) {
@@ -19,17 +19,7 @@ public abstract class AzureBaseCredentials extends BaseStandardCredentials {
 
     public abstract String getGraphEndpoint();
 
-    public TokenCredentialData createToken() {
-        TokenCredentialData token = new TokenCredentialData();
-        token.setAzureEnvironmentName(getAzureEnvironmentName());
-        token.setResourceManagerEndpoint(getResourceManagerEndpoint());
-        token.setManagementEndpoint(getManagementEndpoint());
-        token.setActiveDirectoryEndpoint(getActiveDirectoryEndpoint());
-        token.setGraphEndpoint(getGraphEndpoint());
-        return token;
-    }
+    public abstract String getSubscriptionId();
 
-    public byte[] serializeToTokenData() {
-        return TokenCredentialData.serialize(createToken());
-    }
+    public abstract AzureEnvironment getAzureEnvironment();
 }

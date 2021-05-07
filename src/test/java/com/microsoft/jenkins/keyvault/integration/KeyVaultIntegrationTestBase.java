@@ -7,19 +7,21 @@ package com.microsoft.jenkins.keyvault.integration;
 
 import com.azure.identity.ClientSecretCredential;
 import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.resourcemanager.AzureResourceManager;
+import com.azure.resourcemanager.keyvault.models.Vault;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
-import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.keyvault.Vault;
 import com.microsoft.azure.util.AzureCredentials;
 import com.microsoft.jenkins.integration.IntegrationTestBase;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+
+import hudson.util.Secret;
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -34,7 +36,7 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
     @Before
     public void setUp() throws InterruptedException {
         // Create Azure KeyVault
-        final Azure azureClient = IntegrationTestBase.getAzureClient();
+        final AzureResourceManager azureClient = IntegrationTestBase.getAzureClient();
         vaultName = "tst-vault-" + TestEnvironment.GenerateRandomString(5);
         final Vault vault = azureClient.vaults().define(vaultName)
                 .withRegion(testEnv.region)
@@ -55,8 +57,8 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
                 "",
                 testEnv.subscriptionId,
                 testEnv.clientId,
-                testEnv.clientSecret);
-        credentials.setOauth2TokenEndpoint("http://host/" + testEnv.tenantId + "/oauth2");
+                Secret.fromString(testEnv.clientSecret));
+        credentials.setTenant(testEnv.tenantId);
 
         final CredentialsStore store = CredentialsProvider.lookupStores(j.jenkins).iterator().next();
         try {
@@ -71,7 +73,6 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
      * <p>
      * There may be some delay before key vault becomes available once created.
      *
-     * @throws InterruptedException
      */
     private void waitForKeyVaultAvailable() throws InterruptedException {
         final int maxRetry = 360;

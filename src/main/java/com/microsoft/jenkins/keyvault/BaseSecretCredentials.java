@@ -75,7 +75,7 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
 
             @Override
             public KeyVaultSecret getKeyVaultSecret(String pCredentialId, String aSecretIdentifier) {
-                TokenCredential keyVaultCredentials = AzureCredentials.getCredentialById(pCredentialId);
+                TokenCredential keyVaultCredentials = AzureCredentials.getCredentialById(null, pCredentialId);
                 SecretClient client;
                 URL secretIdentifierUrl;
                 try {

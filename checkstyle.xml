@@ -135,6 +135,8 @@
         <module name="ArrayTypeStyle"/>
         <module name="UpperEll"/>
         <module name="SuppressionCommentFilter"/>
+        <module name="SuppressWarningsHolder"/>
     </module>
+    <module name="SuppressWarningsFilter"/>
 
 </module>

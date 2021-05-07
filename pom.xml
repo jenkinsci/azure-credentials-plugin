@@ -1,5 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
@@ -36,10 +36,9 @@
     <properties>
         <changelist>9999-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/azure-credentials-plugin</gitHubRepo>
-        <jenkins.version>2.263.1</jenkins.version>
+        <jenkins.version>2.277.2</jenkins.version>
         <java.level>8</java.level>
-        <azuresdk.version>1.31.0</azuresdk.version>
-        <azure-commons.version>1.1.2</azure-commons.version>
+        <azuresdk.version>1.41.0</azuresdk.version>
         <hpi.compatibleSinceVersion>4.0.0</hpi.compatibleSinceVersion>
     </properties>
 
@@ -52,9 +51,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>azure-commons-core</artifactId>
-            <version>${azure-commons.version}</version>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>azure-sdk</artifactId>
+            <version>7.va79ea0a60157</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -63,52 +62,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>plain-credentials</artifactId>
-        </dependency>
-
-        <!-- take care in updating the com.azure libs, their azure-core versions need to match -->
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-identity</artifactId>
-            <version>1.0.3</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-security-keyvault-secrets</artifactId>
-            <version>4.1.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure</artifactId>
-            <version>${azuresdk.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>javax.xml.bind</groupId>
-                    <artifactId>jaxb-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>24.1.1-jre</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>jackson2-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -120,70 +73,10 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.263.x</artifactId>
-                <version>26</version>
+                <artifactId>bom-2.277.x</artifactId>
+                <version>807.v6d348e44c987</version>
                 <scope>import</scope>
                 <type>pom</type>
-            </dependency>
-            <dependency>
-                <groupId>net.minidev</groupId>
-                <artifactId>json-smart</artifactId>
-                <version>2.3</version>
-            </dependency>
-            <dependency>
-                <groupId>com.nimbusds</groupId>
-                <artifactId>lang-tag</artifactId>
-                <version>1.4.4</version>
-            </dependency>
-            <dependency>
-                <groupId>com.nimbusds</groupId>
-                <artifactId>nimbus-jose-jwt</artifactId>
-                <version>7.9</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>3.11</version>
-            </dependency>
-            <dependency>
-                <groupId>joda-time</groupId>
-                <artifactId>joda-time</artifactId>
-                <version>2.9.9</version>
-            </dependency>
-            <dependency>
-                <groupId>com.microsoft.azure</groupId>
-                <artifactId>azure-annotations</artifactId>
-                <version>1.10.0</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.code.gson</groupId>
-                <artifactId>gson</artifactId>
-                <version>2.8.5</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.retrofit2</groupId>
-                <artifactId>retrofit</artifactId>
-                <version>2.6.2</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>okhttp</artifactId>
-                <version>3.12.6</version>
-            </dependency>
-            <dependency>
-                <groupId>com.microsoft.rest</groupId>
-                <artifactId>client-runtime</artifactId>
-                <version>1.7.2</version>
-            </dependency>
-            <dependency>
-                <groupId>io.reactivex</groupId>
-                <artifactId>rxjava</artifactId>
-                <version>1.3.8</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.okio</groupId>
-                <artifactId>okio</artifactId>
-                <version>1.15.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -216,44 +109,6 @@
             </resource>
         </resources>
         <plugins>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <configuration>
-                    <!--
-                    Mask all the Azure SDK related classes so that it will not affected by the SDK change in the
-                    depended plugins, such as azure-commons.
-                    -->
-                    <maskClasses>
-                        com.google.common.
-                        com.microsoft.jenkins.azurecommons.core.
-
-                        com.microsoft.azure.AzureAsyncOperation
-                        com.microsoft.azure.AzureClient
-                        com.microsoft.azure.AzureEnvironment
-                        com.microsoft.azure.AzureResponseBuilder
-                        com.microsoft.azure.AzureServiceClient
-                        com.microsoft.azure.AzureServiceFuture
-                        com.microsoft.azure.CloudError
-                        com.microsoft.azure.CloudException
-                        com.microsoft.azure.ListOperationCallback
-                        com.microsoft.azure.Page
-                        com.microsoft.azure.PagedList
-                        com.microsoft.azure.PollingState
-                        com.microsoft.azure.Resource
-                        com.microsoft.azure.SubResource
-                        com.microsoft.aad.
-                        com.microsoft.applicationinsights.
-                        com.microsoft.azure.credentials.
-                        com.microsoft.azure.keyvault.
-                        com.microsoft.azure.management.
-                        com.microsoft.azure.serializer.
-                        com.microsoft.azure.storage.
-                        com.microsoft.rest.
-                    </maskClasses>
-                    <minimumJavaVersion>1.8</minimumJavaVersion>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>

@@ -1,7 +1,7 @@
 package com.microsoft.azure.util;
 
+import com.azure.core.management.AzureEnvironment;
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.microsoft.azure.AzureEnvironment;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.Map;
@@ -19,10 +19,10 @@ public abstract class AbstractManagedIdentitiesCredentials extends AzureBaseCred
     }
 
     public Map<String, String> getEndpoints() {
-        return azureEnvironment.endpoints();
+        return azureEnvironment.getEndpoints();
     }
 
-    private AzureEnvironment getAzureEnvironment() {
+    public AzureEnvironment getAzureEnvironment() {
         return azureEnvironment;
     }
 
@@ -44,19 +44,19 @@ public abstract class AbstractManagedIdentitiesCredentials extends AzureBaseCred
     }
 
     public String getManagementEndpoint() {
-        return azureEnvironment.managementEndpoint();
+        return azureEnvironment.getManagementEndpoint();
     }
 
     public String getActiveDirectoryEndpoint() {
-        return azureEnvironment.activeDirectoryEndpoint();
+        return azureEnvironment.getActiveDirectoryEndpoint();
     }
 
     public String getResourceManagerEndpoint() {
-        return azureEnvironment.resourceManagerEndpoint();
+        return azureEnvironment.getResourceManagerEndpoint();
     }
 
     public String getGraphEndpoint() {
-        return azureEnvironment.graphEndpoint();
+        return azureEnvironment.getGraphEndpoint();
     }
 
 

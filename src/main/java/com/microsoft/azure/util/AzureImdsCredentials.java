@@ -1,17 +1,19 @@
 package com.microsoft.azure.util;
 
+import com.azure.core.http.rest.PagedIterable;
+import com.azure.core.management.profile.AzureProfile;
+import com.azure.identity.ManagedIdentityCredential;
+import com.azure.identity.ManagedIdentityCredentialBuilder;
+import com.azure.resourcemanager.AzureResourceManager;
+import com.azure.resourcemanager.resources.models.Subscription;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
-import com.microsoft.azure.PagedList;
-import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.resources.Subscription;
-import com.microsoft.jenkins.azurecommons.core.credentials.ImdsTokenCredentials;
-import com.microsoft.jenkins.azurecommons.core.credentials.TokenCredentialData;
 import hudson.Extension;
 import hudson.Util;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import org.apache.commons.lang3.StringUtils;
+import io.jenkins.plugins.azuresdk.HttpClientRetriever;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -32,14 +34,6 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
         setAzureEnvironment(AzureEnvUtil.resolveAzureEnv(azureEnvName));
     }
 
-    @Override
-    public TokenCredentialData createToken() {
-        TokenCredentialData token = super.createToken();
-        token.setType(TokenCredentialData.TYPE_IMDS);
-        token.setSubscriptionId(getSubscriptionId());
-        return token;
-    }
-
     public String getSubscriptionId() {
         return subscriptionId;
     }
@@ -53,11 +47,17 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
         try {
             final String credentialSubscriptionId = getSubscriptionId();
 
-            Azure.Authenticated auth = Azure.authenticate(
-                        new ImdsTokenCredentials(AzureEnvUtil.resolveAzureEnv(getAzureEnvName())));
-            PagedList<Subscription> list = auth.subscriptions().list();
+            AzureProfile profile = new AzureProfile(AzureEnvUtil.resolveAzureEnv(getAzureEnvName()));
+            ManagedIdentityCredential credential = new ManagedIdentityCredentialBuilder().build();
+            AzureResourceManager azure = AzureResourceManager
+                    .configure()
+                    .withHttpClient(HttpClientRetriever.get())
+                    .authenticate(credential, profile)
+                    .withSubscription(credentialSubscriptionId);
+
+            PagedIterable<Subscription> subscriptions = azure.subscriptions().list();
             if (subscriptionId != null) {
-                for (Subscription subscription : list) {
+                for (Subscription subscription : subscriptions) {
                     if (subscription.subscriptionId().equalsIgnoreCase(credentialSubscriptionId)) {
                         return true;
                     }
