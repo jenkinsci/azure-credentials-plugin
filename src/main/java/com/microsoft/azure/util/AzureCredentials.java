@@ -699,7 +699,7 @@ public class AzureCredentials extends AzureBaseCredentials {
         @Override
         @NonNull
         public String getDisplayName() {
-            return "Microsoft Azure Service Principal";
+            return "Azure Service Principal";
         }
 
         public FormValidation doVerifyConfiguration(

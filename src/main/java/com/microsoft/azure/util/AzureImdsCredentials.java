@@ -78,7 +78,7 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
 
         @Override
         public String getDisplayName() {
-            return "Managed Identities for Azure Resources";
+            return "Azure Managed Identity";
         }
 
         public ListBoxModel doFillAzureEnvNameItems() {
