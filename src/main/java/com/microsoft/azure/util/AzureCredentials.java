@@ -7,6 +7,7 @@ package com.microsoft.azure.util;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
+import com.azure.identity.ClientSecretCredential;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.identity.ManagedIdentityCredentialBuilder;
 import com.azure.identity.implementation.IdentityClientOptions;
@@ -17,9 +18,12 @@ import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.domains.DomainCredentials;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;
+import com.microsoft.jenkins.keyvault.SecretClientCache;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
@@ -28,6 +32,7 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import io.jenkins.plugins.azuresdk.HttpClientRetriever;
+import java.util.List;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
@@ -455,6 +460,7 @@ public class AzureCredentials extends AzureBaseCredentials {
             Secret clientSecret) {
         super(scope, id, description);
         data = new ServicePrincipal(subscriptionId, clientId, clientSecret);
+        SecretClientCache.invalidateCache();
     }
 
     /**
@@ -505,6 +511,51 @@ public class AzureCredentials extends AzureBaseCredentials {
                 .httpClient(HttpClientRetriever.get())
                 .buildClient();
     }
+
+    /**
+     * Only checks the system provider for credentials.
+     * Use if you need to bypass other providers, e.g. in a credential provider.
+     */
+    public static TokenCredential getSystemCredentialById(String credentialID) {
+        if (StringUtils.isEmpty(credentialID)) {
+            return null;
+        }
+        SystemCredentialsProvider systemCredentialsProvider = SystemCredentialsProvider.getInstance();
+        List<AzureImdsCredentials> azureImdsCredentials =
+            DomainCredentials.getCredentials(systemCredentialsProvider.getDomainCredentialsMap(),
+                AzureImdsCredentials.class,
+                Collections.emptyList(),
+                CredentialsMatchers.withId(credentialID));
+
+        if (!azureImdsCredentials.isEmpty()) {
+            return new ManagedIdentityCredentialBuilder().build();
+        }
+
+        List<AzureCredentials> azureCredentials =
+            DomainCredentials.getCredentials(systemCredentialsProvider.getDomainCredentialsMap(),
+                AzureCredentials.class,
+                Collections.emptyList(),
+                CredentialsMatchers.withId(credentialID));
+
+        ClientSecretCredential credential = null;
+        if (!azureCredentials.isEmpty()) {
+            AzureCredentials azureCredential = azureCredentials.get(0);
+
+            credential = new ClientSecretCredentialBuilder()
+                .clientId(azureCredential.getClientId())
+                .clientSecret(azureCredential.getPlainClientSecret())
+                .httpClient(HttpClientRetriever.get())
+                .tenantId(azureCredential.getTenant())
+                .build();
+        }
+
+        if (credential == null) {
+            throw new RuntimeException(String.format("Credential: %s was not found for supported credentials "
+                + "type.", credentialID));
+        }
+        return credential;
+    }
+
 
     public static TokenCredential getTokenCredential(AzureBaseCredentials credentials) {
         if (credentials instanceof AzureCredentials) {
