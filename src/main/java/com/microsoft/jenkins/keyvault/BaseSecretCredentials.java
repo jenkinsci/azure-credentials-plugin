@@ -5,7 +5,6 @@
 
 package com.microsoft.jenkins.keyvault;
 
-import com.azure.core.credential.TokenCredential;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsScope;
@@ -71,32 +70,25 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
 
         int NAME_POSITION = 2;
         int VERSION_POSITION = 3;
-        SecretGetter DEFAULT = new SecretGetter() {
-
-            @Override
-            public KeyVaultSecret getKeyVaultSecret(String pCredentialId, String aSecretIdentifier) {
-                TokenCredential keyVaultCredentials = AzureCredentials.getCredentialById(null, pCredentialId);
-                SecretClient client;
-                URL secretIdentifierUrl;
-                try {
-                    secretIdentifierUrl = new URL(aSecretIdentifier);
-                    client = AzureCredentials.createKeyVaultClient(
-                            keyVaultCredentials,
-                            "https://" + secretIdentifierUrl.getHost());
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
-                }
-
-                // old SDK supports secret identifier which is a full URI to the secret
-                // the new SDK doesn't seem to support it to we parse it to get the values we need
-                // https://mine.vault.azure.net/secrets/<name>/<version>
-                String[] split = secretIdentifierUrl.getPath().split("/");
-
-                if (split.length == NAME_POSITION + 1) {
-                    return client.getSecret(split[NAME_POSITION]);
-                }
-                return client.getSecret(split[NAME_POSITION], split[VERSION_POSITION]);
+        SecretGetter DEFAULT = (pCredentialId, aSecretIdentifier) -> {
+            SecretClient client;
+            URL secretIdentifierUrl;
+            try {
+                secretIdentifierUrl = new URL(aSecretIdentifier);
+                client = SecretClientCache.get(pCredentialId, "https://" + secretIdentifierUrl.getHost());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
             }
+
+            // old SDK supports secret identifier which is a full URI to the secret
+            // the new SDK doesn't seem to support it to we parse it to get the values we need
+            // https://mine.vault.azure.net/secrets/<name>/<version>
+            String[] split = secretIdentifierUrl.getPath().split("/");
+
+            if (split.length == NAME_POSITION + 1) {
+                return client.getSecret(split[NAME_POSITION]);
+            }
+            return client.getSecret(split[NAME_POSITION], split[VERSION_POSITION]);
         };
     }
 
@@ -104,8 +96,8 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
 
         public ListBoxModel doFillServicePrincipalIdItems(Item owner) {
             return new StandardListBoxModel()
-                    .includeEmptyValue()
-                    .includeAs(ACL.SYSTEM, owner, AzureCredentials.class);
+                .includeEmptyValue()
+                .includeAs(ACL.SYSTEM, owner, AzureCredentials.class);
         }
     }
 }
