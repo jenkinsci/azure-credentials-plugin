@@ -20,6 +20,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 
 import java.time.Duration;
+import java.util.Objects;
 
 public final class AzureResourceManagerCache {
 
@@ -81,6 +82,24 @@ public final class AzureResourceManagerCache {
         CacheKey(String credentialsId, String subscriptionId) {
             this.credentialsId = credentialsId;
             this.subscriptionId = subscriptionId;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            CacheKey cacheKey = (CacheKey) o;
+            return credentialsId.equals(cacheKey.credentialsId)
+                    && Objects.equals(subscriptionId, cacheKey.subscriptionId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(credentialsId, subscriptionId);
         }
     }
 
