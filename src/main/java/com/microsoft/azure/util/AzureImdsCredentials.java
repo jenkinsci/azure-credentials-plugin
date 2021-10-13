@@ -66,7 +66,7 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
                 return true;
             }
         } catch (Exception e) {
-            throw new AzureCredentials.ValidationException(Messages.Azure_CantValidate() + ": " + e.getMessage());
+            throw new AzureCredentials.ValidationException(Messages.Azure_CantValidate() + ": " + e.getMessage(), e);
         }
         throw new AzureCredentials.ValidationException(Messages.Azure_Invalid_SubscriptionId());
     }
