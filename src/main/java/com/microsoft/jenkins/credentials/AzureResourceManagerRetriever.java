@@ -32,7 +32,9 @@ public final class AzureResourceManagerRetriever {
 
     public static AzureResourceManager getClient(String credentialId, @CheckForNull String subscriptionId) {
         AzureBaseCredentials credential = AzureCredentialUtil.getCredential(null, credentialId);
-        return getAzureResourceManager(credential, subscriptionId);
+
+        String actualSubscriptionId = subscriptionId != null ? subscriptionId : credential.getSubscriptionId();
+        return getAzureResourceManager(credential, actualSubscriptionId);
     }
 
     private static AzureResourceManager getAzureResourceManager(
