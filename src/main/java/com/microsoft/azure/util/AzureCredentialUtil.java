@@ -7,7 +7,7 @@ import hudson.model.Item;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
 
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 
 public final class AzureCredentialUtil {

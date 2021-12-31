@@ -16,7 +16,7 @@ import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -125,7 +125,7 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
     }
 
     @Override
-    public MultiEnvironment bind(@Nonnull Run<?, ?> build,
+    public MultiEnvironment bind(@NonNull Run<?, ?> build,
                                  FilePath workspace,
                                  Launcher launcher,
                                  TaskListener listener)
