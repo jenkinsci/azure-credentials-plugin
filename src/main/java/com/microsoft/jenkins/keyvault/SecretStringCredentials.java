@@ -13,7 +13,7 @@ import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public class SecretStringCredentials extends BaseSecretCredentials implements StringCredentials {
 
@@ -28,7 +28,7 @@ public class SecretStringCredentials extends BaseSecretCredentials implements St
         super(scope, id, description, servicePrincipalId, secretIdentifier);
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Secret getSecret() {
         final KeyVaultSecret secretBundle = getKeyVaultSecret();

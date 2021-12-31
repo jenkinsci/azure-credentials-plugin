@@ -7,6 +7,7 @@ package com.microsoft.jenkins.keyvault;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.Util;
@@ -16,8 +17,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -61,7 +60,7 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
      * @return a {@code char[]} containing the password or {@code null}
      */
     @CheckForNull
-    private static char[] toCharArray(@Nonnull Secret password) {
+    private static char[] toCharArray(@NonNull Secret password) {
         String plainText = Util.fixEmpty(password.getPlainText());
         if (plainText == null) {
             return null;
