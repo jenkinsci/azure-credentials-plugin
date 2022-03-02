@@ -20,6 +20,8 @@ for full support please use the [Azure Key Vault plugin](https://plugins.jenkins
 
 ## Using AzureCredentials in a job (freestyle / pipeline)
 
+### Freestyle
+
 In freestyle jobs, click `Use secret text(s) or file(s)` in the `Build Environment` in the configuration page and 
 add a `Azure Service Principal` item, which allows you to add credential bindings
 where the *Variable* value will be used as the name of the environment variable
@@ -34,7 +36,9 @@ echo "My tenant id is $AZURE_TENANT_ID"
 echo "My subscription id is $AZURE_SUBSCRIPTION_ID"
 ```
 
-In pipelines, there are two ways to construct this binding:
+### Scripted pipeline
+
+In scripted pipelines, there are two ways to construct this binding:
 
 1.  With defaults, which will read specified service principal into four predefined environment variables: 
     `AZURE_SUBSCRIPTION_ID`,
@@ -61,6 +65,36 @@ Sample pipeline code:
      sh 'az login --service-principal -u $CLIENT_ID -p $CLIENT_SECRET -t $TENANT_ID'
  }
  ```
+
+### Declarative pipeline
+
+In declarative pipeline it will add extra environment variables based off of the variable name you requested.
+
+If you did `MY_CRED = credentials('credentials_id')`
+
+You will get:
+- `MY_CRED_CLIENT_ID`
+- `MY_CRED_CLIENT_SECRET`
+- `MY_CRED_TENANT_ID`
+- `MY_CRED_SUBSCRIPTION_ID`
+
+```groovy
+
+pipeline {
+  environment {
+    MY_CRED = credentials('credentials_id')
+  }
+
+  stages {
+    stage('build') {
+      steps {
+          sh 'az login --service-principal -u $MY_CRED_CLIENT_ID -p $MY_CRED_CLIENT_SECRET -t $MY_CRED_TENANT_ID'
+      }
+    }
+  }
+}
+
+```
 
 ## Using Azure credentials in your own Jenkins plugin
 
