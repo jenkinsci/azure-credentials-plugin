@@ -140,8 +140,8 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
     }
 
     @Override
-    public Set<String> variables() {
-        return new HashSet<String>(Arrays.asList(
+    public Set<String> variables(Run<?, ?> build) {
+        return new HashSet<>(Arrays.asList(
                 getSubscriptionIdVariable(),
                 getClientIdVariable(),
                 getClientSecretVariable(),
