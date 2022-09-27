@@ -530,7 +530,14 @@ public class AzureCredentials extends AzureBaseCredentials {
                 CredentialsMatchers.withId(credentialID));
 
         if (!azureImdsCredentials.isEmpty()) {
-            return new ManagedIdentityCredentialBuilder().build();
+            AzureImdsCredentials azureIdmsCredential = azureImdsCredentials.get(0);
+            ManagedIdentityCredentialBuilder credentialBuilder = new ManagedIdentityCredentialBuilder();
+
+            if (azureIdmsCredential.isUserAssigned()) {
+                credentialBuilder.clientId(azureIdmsCredential.getClientId());
+            }
+
+            return credentialBuilder.build();
         }
 
         List<AzureCredentials> azureCredentials =
@@ -573,9 +580,16 @@ public class AzureCredentials extends AzureBaseCredentials {
         }
 
         if (credentials instanceof AzureImdsCredentials) {
-            return new ManagedIdentityCredentialBuilder()
-                    .httpClient(HttpClientRetriever.get())
-                    .build();
+            AzureImdsCredentials idmsCredentials = (AzureImdsCredentials) credentials;
+
+            ManagedIdentityCredentialBuilder credentialBuilder = new ManagedIdentityCredentialBuilder()
+                .httpClient(HttpClientRetriever.get());
+
+            if (idmsCredentials.isUserAssigned()) {
+                credentialBuilder.clientId(idmsCredentials.getClientId());
+            }
+
+            return credentialBuilder.build();
         }
         throw new RuntimeException(String.format("Unsupported credential: %s", credentials.getId()));
     }

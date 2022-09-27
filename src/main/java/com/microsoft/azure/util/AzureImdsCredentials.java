@@ -2,7 +2,6 @@ package com.microsoft.azure.util;
 
 import com.azure.core.http.rest.PagedIterable;
 import com.azure.core.management.profile.AzureProfile;
-import com.azure.identity.ManagedIdentityCredential;
 import com.azure.identity.ManagedIdentityCredentialBuilder;
 import com.azure.resourcemanager.AzureResourceManager;
 import com.azure.resourcemanager.resources.models.Subscription;
@@ -21,6 +20,7 @@ import org.kohsuke.stapler.QueryParameter;
 public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
 
     private String subscriptionId;
+    private String clientId;
 
     public AzureImdsCredentials(CredentialsScope scope, String id, String description) {
         super(scope, id, description);
@@ -43,21 +43,42 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
         this.subscriptionId = Util.fixEmpty(subscriptionId);
     }
 
+    public String getClientId() {
+        return clientId;
+    }
+
+    public boolean isUserAssigned() {
+        return null != clientId;
+    }
+
+    @DataBoundSetter
+    public void setClientId(String clientId) {
+        this.clientId = Util.fixEmpty(clientId);
+    }
+
     public boolean validate() throws AzureCredentials.ValidationException {
         try {
             final String credentialSubscriptionId = getSubscriptionId();
 
             AzureProfile profile = new AzureProfile(AzureEnvUtil.resolveAzureEnv(getAzureEnvName()));
-            ManagedIdentityCredential credential = new ManagedIdentityCredentialBuilder().build();
+            ManagedIdentityCredentialBuilder credentialBuilder = new ManagedIdentityCredentialBuilder();
+
+            if (isUserAssigned()) {
+                credentialBuilder.clientId(clientId);
+            }
+
             AzureResourceManager azure = AzureResourceManager
                     .configure()
                     .withHttpClient(HttpClientRetriever.get())
-                    .authenticate(credential, profile)
+                    .authenticate(credentialBuilder.build(), profile)
                     .withSubscription(credentialSubscriptionId);
 
             PagedIterable<Subscription> subscriptions = azure.subscriptions().list();
+
             if (subscriptionId != null) {
                 for (Subscription subscription : subscriptions) {
+                    System.out.println(subscription.subscriptionId());
+
                     if (subscription.subscriptionId().equalsIgnoreCase(credentialSubscriptionId)) {
                         return true;
                     }
@@ -92,12 +113,16 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
 
         public FormValidation doVerifyConfiguration(
                 @QueryParameter String subscriptionId,
+                @QueryParameter String clientId,
                 @QueryParameter String azureEnvironmentName) {
 
             AzureImdsCredentials imdsCredentials = new AzureImdsCredentials(null, null, null, azureEnvironmentName);
             if (StringUtils.isNotBlank(subscriptionId)) {
                 imdsCredentials.setSubscriptionId(subscriptionId);
             }
+
+            imdsCredentials.setClientId(clientId);
+
             try {
                 imdsCredentials.validate();
             } catch (AzureCredentials.ValidationException e) {
