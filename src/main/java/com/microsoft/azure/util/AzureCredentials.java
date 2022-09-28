@@ -533,7 +533,7 @@ public class AzureCredentials extends AzureBaseCredentials {
             AzureImdsCredentials azureIdmsCredential = azureImdsCredentials.get(0);
             ManagedIdentityCredentialBuilder credentialBuilder = new ManagedIdentityCredentialBuilder();
 
-            if (azureIdmsCredential.isUserAssigned()) {
+            if (null != azureIdmsCredential.getClientId()) {
                 credentialBuilder.clientId(azureIdmsCredential.getClientId());
             }
 
@@ -585,7 +585,7 @@ public class AzureCredentials extends AzureBaseCredentials {
             ManagedIdentityCredentialBuilder credentialBuilder = new ManagedIdentityCredentialBuilder()
                 .httpClient(HttpClientRetriever.get());
 
-            if (idmsCredentials.isUserAssigned()) {
+            if (null != idmsCredentials.getClientId()) {
                 credentialBuilder.clientId(idmsCredentials.getClientId());
             }
 

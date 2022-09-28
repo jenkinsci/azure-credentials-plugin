@@ -47,10 +47,6 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
         return clientId;
     }
 
-    public boolean isUserAssigned() {
-        return null != clientId;
-    }
-
     @DataBoundSetter
     public void setClientId(String clientId) {
         this.clientId = Util.fixEmpty(clientId);
@@ -63,7 +59,7 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
             AzureProfile profile = new AzureProfile(AzureEnvUtil.resolveAzureEnv(getAzureEnvName()));
             ManagedIdentityCredentialBuilder credentialBuilder = new ManagedIdentityCredentialBuilder();
 
-            if (isUserAssigned()) {
+            if (null != clientId) {
                 credentialBuilder.clientId(clientId);
             }
 
@@ -77,8 +73,6 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
 
             if (subscriptionId != null) {
                 for (Subscription subscription : subscriptions) {
-                    System.out.println(subscription.subscriptionId());
-
                     if (subscription.subscriptionId().equalsIgnoreCase(credentialSubscriptionId)) {
                         return true;
                     }
@@ -121,7 +115,9 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
                 imdsCredentials.setSubscriptionId(subscriptionId);
             }
 
-            imdsCredentials.setClientId(clientId);
+            if (StringUtils.isNotBlank(clientId)) {
+                imdsCredentials.setClientId(clientId);
+            }
 
             try {
                 imdsCredentials.validate();
