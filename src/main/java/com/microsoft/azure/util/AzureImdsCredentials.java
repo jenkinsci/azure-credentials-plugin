@@ -44,7 +44,7 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
     }
 
     public String getClientId() {
-        return clientId;
+        return Util.fixEmpty(clientId);
     }
 
     @DataBoundSetter
@@ -59,8 +59,8 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
             AzureProfile profile = new AzureProfile(AzureEnvUtil.resolveAzureEnv(getAzureEnvName()));
             ManagedIdentityCredentialBuilder credentialBuilder = new ManagedIdentityCredentialBuilder();
 
-            if (null != clientId) {
-                credentialBuilder.clientId(clientId);
+            if (null != getClientId()) {
+                credentialBuilder.clientId(getClientId());
             }
 
             AzureResourceManager azure = AzureResourceManager
