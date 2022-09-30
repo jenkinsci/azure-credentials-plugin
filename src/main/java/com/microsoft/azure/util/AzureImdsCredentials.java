@@ -59,7 +59,7 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
             AzureProfile profile = new AzureProfile(AzureEnvUtil.resolveAzureEnv(getAzureEnvName()));
             ManagedIdentityCredentialBuilder credentialBuilder = new ManagedIdentityCredentialBuilder();
 
-            if (null != getClientId()) {
+            if (getClientId() != null) {
                 credentialBuilder.clientId(getClientId());
             }
 
