@@ -11,7 +11,6 @@
     <version>${changelist}</version>
     <packaging>hpi</packaging>
     <name>Azure Credentials</name>
-    <description>Manage Azure credentials using Jenkins Credentials API</description>
     <url>https://github.com/jenkinsci/azure-credentials-plugin</url>
 
     <developers>

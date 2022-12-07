@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+    Manage Azure credentials using Jenkins Credentials API
+</div>
