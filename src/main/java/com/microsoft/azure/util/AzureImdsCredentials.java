@@ -100,7 +100,6 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
             ListBoxModel model = new ListBoxModel();
             model.add(AzureEnvUtil.Constants.ENV_AZURE);
             model.add(AzureEnvUtil.Constants.ENV_AZURE_CHINA);
-            model.add(AzureEnvUtil.Constants.ENV_AZURE_GERMANY);
             model.add(AzureEnvUtil.Constants.ENV_AZURE_US_GOVERNMENT);
             return model;
         }
