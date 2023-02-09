@@ -7,6 +7,7 @@ package com.microsoft.jenkins.keyvault;
 
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
@@ -15,6 +16,10 @@ import com.microsoft.azure.util.AzureCredentials;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.QueryParameter;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -94,10 +99,26 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
 
     protected abstract static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
 
-        public ListBoxModel doFillServicePrincipalIdItems(Item owner) {
-            return new StandardListBoxModel()
-                .includeEmptyValue()
-                .includeAs(ACL.SYSTEM, owner, AzureCredentials.class);
+        public ListBoxModel doFillServicePrincipalIdItems(
+                @AncestorInPath Item owner,
+                @QueryParameter("servicePrincipalId") String servicePrincipalId) {
+            StandardListBoxModel model = new StandardListBoxModel();
+            model.includeEmptyValue();
+            if (owner == null) {
+                if (!Jenkins.get().hasPermission(CredentialsProvider.CREATE)
+                        && !Jenkins.get().hasPermission(CredentialsProvider.UPDATE)) {
+                    return model.includeCurrentValue(servicePrincipalId);
+                }
+            } else {
+                if (!owner.hasPermission(CredentialsProvider.CREATE)
+                        && !owner.hasPermission(CredentialsProvider.UPDATE)) {
+                    return model.includeCurrentValue(servicePrincipalId);
+                }
+            }
+            return model
+                    .includeCurrentValue(servicePrincipalId)
+                    .includeAs(Jenkins.getAuthentication(), owner, AzureCredentials.class)
+                    .includeAs(ACL.SYSTEM, owner, AzureCredentials.class);
         }
     }
 }

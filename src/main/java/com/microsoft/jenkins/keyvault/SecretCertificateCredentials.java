@@ -11,11 +11,15 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.Util;
+import hudson.model.Item;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
+import jenkins.model.Jenkins;
 import org.apache.commons.codec.binary.Base64;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -102,10 +106,17 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
             return Messages.Certificate_Credentials_Display_Name();
         }
 
+        @POST
         public FormValidation doVerifyConfiguration(
+                @AncestorInPath Item owner,
                 @QueryParameter String servicePrincipalId,
                 @QueryParameter String secretIdentifier,
                 @QueryParameter Secret password) {
+            if (owner == null) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                owner.checkPermission(Item.CONFIGURE);
+            }
 
             final SecretCertificateCredentials credentials = new SecretCertificateCredentials(
                     CredentialsScope.SYSTEM, "", "", servicePrincipalId, secretIdentifier, password);

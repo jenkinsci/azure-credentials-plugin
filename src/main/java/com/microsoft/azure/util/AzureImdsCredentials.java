@@ -1,5 +1,7 @@
 package com.microsoft.azure.util;
 
+import com.azure.core.http.policy.FixedDelay;
+import com.azure.core.http.policy.RetryPolicy;
 import com.azure.core.http.rest.PagedIterable;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ManagedIdentityCredentialBuilder;
@@ -8,14 +10,20 @@ import com.azure.resourcemanager.resources.models.Subscription;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import hudson.Extension;
+import hudson.Main;
 import hudson.Util;
+import hudson.model.Item;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.azuresdk.HttpClientRetriever;
+import java.time.Duration;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
 public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
 
@@ -65,6 +73,7 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
 
             AzureResourceManager azure = AzureResourceManager
                     .configure()
+                    .withRetryPolicy(getRetryPolicy())
                     .withHttpClient(HttpClientRetriever.get())
                     .authenticate(credentialBuilder.build(), profile)
                     .withSubscription(credentialSubscriptionId);
@@ -86,6 +95,10 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
         throw new AzureCredentials.ValidationException(Messages.Azure_Invalid_SubscriptionId());
     }
 
+    private static RetryPolicy getRetryPolicy() {
+        return Main.isUnitTest ? new RetryPolicy(new FixedDelay(0, Duration.ZERO)) : new RetryPolicy();
+    }
+
 
     @Extension
     public static class DescriptorImpl
@@ -104,10 +117,17 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
             return model;
         }
 
+        @POST
         public FormValidation doVerifyConfiguration(
+                @AncestorInPath Item owner,
                 @QueryParameter String subscriptionId,
                 @QueryParameter String clientId,
                 @QueryParameter String azureEnvironmentName) {
+            if (owner == null) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                owner.checkPermission(Item.CONFIGURE);
+            }
 
             AzureImdsCredentials imdsCredentials = new AzureImdsCredentials(null, null, null, azureEnvironmentName);
             if (StringUtils.isNotBlank(subscriptionId)) {

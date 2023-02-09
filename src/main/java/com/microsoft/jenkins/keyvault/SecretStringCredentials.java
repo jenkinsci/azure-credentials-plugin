@@ -7,11 +7,15 @@ package com.microsoft.jenkins.keyvault;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import hudson.Extension;
+import hudson.model.Item;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
@@ -43,9 +47,17 @@ public class SecretStringCredentials extends BaseSecretCredentials implements St
             return Messages.String_Credentials_Diaplay_Name();
         }
 
+
+        @POST
         public FormValidation doVerifyConfiguration(
+                @AncestorInPath Item owner,
                 @QueryParameter String servicePrincipalId,
                 @QueryParameter String secretIdentifier) {
+            if (owner == null) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                owner.checkPermission(Item.CONFIGURE);
+            }
 
             final SecretStringCredentials credentials = new SecretStringCredentials(
                     CredentialsScope.SYSTEM, "", "", servicePrincipalId, secretIdentifier);

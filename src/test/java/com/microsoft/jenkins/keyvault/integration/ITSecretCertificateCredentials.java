@@ -34,8 +34,7 @@ public class ITSecretCertificateCredentials extends KeyVaultIntegrationTestBase 
 
         // Verify configuration
         final SecretCertificateCredentials.DescriptorImpl descriptor = new SecretCertificateCredentials.DescriptorImpl();
-        final FormValidation result = descriptor.doVerifyConfiguration(
-                jenkinsAzureCredentialsId, secretIdentifier, password);
+        final FormValidation result = descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId, secretIdentifier, password);
         Assert.assertEquals(FormValidation.Kind.OK, result.kind);
 
         // Get key store
@@ -55,7 +54,7 @@ public class ITSecretCertificateCredentials extends KeyVaultIntegrationTestBase 
 
         // Verify configuration
         final SecretCertificateCredentials.DescriptorImpl descriptor = new SecretCertificateCredentials.DescriptorImpl();
-        final FormValidation result = descriptor.doVerifyConfiguration(jenkinsAzureCredentialsId,
+        final FormValidation result = descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId,
                 secretIdentifier, Secret.fromString(""));
         Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
 
@@ -79,7 +78,7 @@ public class ITSecretCertificateCredentials extends KeyVaultIntegrationTestBase 
 
         // Verify configuration
         final SecretCertificateCredentials.DescriptorImpl descriptor = new SecretCertificateCredentials.DescriptorImpl();
-        final FormValidation result = descriptor.doVerifyConfiguration(jenkinsAzureCredentialsId,
+        final FormValidation result = descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId,
                 secretIdentifier, Secret.fromString(""));
         Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
         Assert.assertEquals(Messages.Certificate_Credentials_Validation_No_Private_Key(), result.getMessage());

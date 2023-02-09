@@ -15,6 +15,7 @@ import com.azure.resourcemanager.AzureResourceManager;
 import com.azure.resourcemanager.resources.models.Subscription;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
+import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
@@ -35,11 +36,13 @@ import hudson.util.Secret;
 import io.jenkins.plugins.azuresdk.HttpClientRetriever;
 import java.util.List;
 import jenkins.model.Jenkins;
+import org.acegisecurity.Authentication;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.ByteArrayInputStream;
@@ -153,13 +156,15 @@ public class AzureCredentials extends AzureBaseCredentials {
             if (StringUtils.isEmpty(certificateId)) {
                 return null;
             }
-            return CredentialsMatchers.firstOrNull(
-                    CredentialsProvider.lookupCredentials(
-                            CertificateCredentialsImpl.class,
-                            Jenkins.get(),
-                            ACL.SYSTEM,
-                            Collections.emptyList()),
-                    CredentialsMatchers.withId(certificateId));
+            CertificateCredentialsImpl certificate = getCredentials(
+                    CertificateCredentialsImpl.class,
+                    certificateId, ACL.SYSTEM);
+            if (certificate == null) {
+                return getCredentials(
+                        CertificateCredentialsImpl.class,
+                        certificateId, Jenkins.getAuthentication());
+            }
+            return null;
         }
 
         @Nullable
@@ -565,6 +570,17 @@ public class AzureCredentials extends AzureBaseCredentials {
         return credential;
     }
 
+    private static <T extends Credentials> T getCredentials(
+            Class<T> type, String certificateId, Authentication authentication) {
+        return CredentialsMatchers.firstOrNull(
+                CredentialsProvider.lookupCredentials(
+                        type,
+                        Jenkins.get(),
+                        authentication,
+                        Collections.emptyList()),
+                CredentialsMatchers.withId(certificateId));
+    }
+
 
     public static TokenCredential getTokenCredential(AzureBaseCredentials credentials) {
         if (credentials instanceof AzureCredentials) {
@@ -769,7 +785,10 @@ public class AzureCredentials extends AzureBaseCredentials {
             return "Azure Service Principal";
         }
 
+
+        @POST
         public FormValidation doVerifyConfiguration(
+                @AncestorInPath Item owner,
                 @QueryParameter String subscriptionId,
                 @QueryParameter String clientId,
                 @QueryParameter String clientSecret,
@@ -780,6 +799,11 @@ public class AzureCredentials extends AzureBaseCredentials {
                 @QueryParameter String authenticationEndpoint,
                 @QueryParameter String resourceManagerEndpoint,
                 @QueryParameter String graphEndpoint) {
+            if (owner == null) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                owner.checkPermission(Item.CONFIGURE);
+            }
 
             AzureCredentials.ServicePrincipal servicePrincipal
                     = new AzureCredentials.ServicePrincipal(subscriptionId, clientId, Secret.fromString(clientSecret));
@@ -799,11 +823,27 @@ public class AzureCredentials extends AzureBaseCredentials {
             return FormValidation.ok(Messages.Azure_Config_Success());
         }
 
-        public ListBoxModel doFillCertificateIdItems(@AncestorInPath Item owner) {
+        public ListBoxModel doFillCertificateIdItems(
+                @AncestorInPath Item owner,
+                @QueryParameter("certificateId") String certificateId) {
             StandardListBoxModel model = new StandardListBoxModel();
             model.add(Messages.Azure_Credentials_Select(), "");
-            model.includeAs(ACL.SYSTEM, owner, CertificateCredentialsImpl.class);
-            return model;
+            if (owner == null) {
+                if (!Jenkins.get().hasPermission(CredentialsProvider.CREATE)
+                        && !Jenkins.get().hasPermission(CredentialsProvider.UPDATE)) {
+                    return model.includeCurrentValue(certificateId);
+                }
+            } else {
+                if (!owner.hasPermission(CredentialsProvider.CREATE)
+                        && !owner.hasPermission(CredentialsProvider.UPDATE)) {
+                    return model.includeCurrentValue(certificateId);
+                }
+            }
+
+            return model
+                    .includeCurrentValue(certificateId)
+                    .includeAs(Jenkins.getAuthentication(), owner, CertificateCredentialsImpl.class)
+                    .includeAs(ACL.SYSTEM, owner, CertificateCredentialsImpl.class);
         }
 
         public ListBoxModel doFillAzureEnvironmentNameItems() {

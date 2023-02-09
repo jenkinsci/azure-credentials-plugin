@@ -22,7 +22,7 @@ public class ITSecretStringCredentials extends KeyVaultIntegrationTestBase {
 
         // Verify configuration
         final SecretStringCredentials.DescriptorImpl descriptor = new SecretStringCredentials.DescriptorImpl();
-        final FormValidation result = descriptor.doVerifyConfiguration(jenkinsAzureCredentialsId, secretIdentifier);
+        final FormValidation result = descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId, secretIdentifier);
         Assert.assertEquals(FormValidation.Kind.OK, result.kind);
 
         // Get secret
@@ -39,7 +39,7 @@ public class ITSecretStringCredentials extends KeyVaultIntegrationTestBase {
 
         // Verify configuration
         final SecretStringCredentials.DescriptorImpl descriptor = new SecretStringCredentials.DescriptorImpl();
-        final FormValidation result = descriptor.doVerifyConfiguration(jenkinsAzureCredentialsId,
+        final FormValidation result = descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId,
                 secretIdentifier);
         Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
 
