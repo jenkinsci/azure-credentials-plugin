@@ -12,10 +12,9 @@ import com.azure.identity.implementation.IdentityClient;
 import com.azure.identity.implementation.IdentityClientBuilder;
 import com.azure.identity.implementation.IdentityClientOptions;
 import com.azure.identity.implementation.util.LoggingUtil;
-import reactor.core.publisher.Mono;
-
 import java.io.InputStream;
 import java.util.Objects;
+import reactor.core.publisher.Mono;
 
 /**
  * An AAD credential that acquires a token with a client certificate for an AAD application.
@@ -54,27 +53,34 @@ public class ClientCertificateCredential2 implements TokenCredential {
      * @param certificatePassword the password protecting the PFX file
      * @param identityClientOptions the options to configure the identity client
      */
-    ClientCertificateCredential2(String tenantId, String clientId, String certificatePath, InputStream certificate,
-                                 String certificatePassword, IdentityClientOptions identityClientOptions) {
-        Objects.requireNonNull(certificatePath == null ? certificate : certificatePath,
+    ClientCertificateCredential2(
+            String tenantId,
+            String clientId,
+            String certificatePath,
+            InputStream certificate,
+            String certificatePassword,
+            IdentityClientOptions identityClientOptions) {
+        Objects.requireNonNull(
+                certificatePath == null ? certificate : certificatePath,
                 "'certificate' and 'certificatePath' cannot both be null.");
         identityClient = new IdentityClientBuilder()
-            .tenantId(tenantId)
-            .clientId(clientId)
-            .certificatePath(certificatePath)
-            .certificate(certificate)
-            .certificatePassword(certificatePassword)
-            .identityClientOptions(identityClientOptions)
-            .build();
+                .tenantId(tenantId)
+                .clientId(clientId)
+                .certificatePath(certificatePath)
+                .certificate(certificate)
+                .certificatePassword(certificatePassword)
+                .identityClientOptions(identityClientOptions)
+                .build();
     }
 
     @Override
     public Mono<AccessToken> getToken(TokenRequestContext request) {
-        return identityClient.authenticateWithConfidentialClientCache(request)
-            .onErrorResume(t -> Mono.empty())
-            .switchIfEmpty(Mono.defer(() -> identityClient.authenticateWithConfidentialClient(request)))
-            .doOnNext(token -> LoggingUtil.logTokenSuccess(logger, request))
-            .doOnError(error -> LoggingUtil.logTokenError(logger, identityClient.getIdentityClientOptions(), request,
-                error));
+        return identityClient
+                .authenticateWithConfidentialClientCache(request)
+                .onErrorResume(t -> Mono.empty())
+                .switchIfEmpty(Mono.defer(() -> identityClient.authenticateWithConfidentialClient(request)))
+                .doOnNext(token -> LoggingUtil.logTokenSuccess(logger, request))
+                .doOnError(error ->
+                        LoggingUtil.logTokenError(logger, identityClient.getIdentityClientOptions(), request, error));
     }
 }

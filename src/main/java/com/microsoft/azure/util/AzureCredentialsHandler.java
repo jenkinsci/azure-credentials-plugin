@@ -2,14 +2,13 @@ package com.microsoft.azure.util;
 
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.jenkinsci.plugins.pipeline.modeldefinition.model.CredentialsBindingHandler;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 @Extension(optional = true)
 public class AzureCredentialsHandler extends CredentialsBindingHandler<StandardUsernamePasswordCredentials> {

@@ -40,13 +40,8 @@ public class SecretStringCredentialsTest {
                 return secretBundle;
             }
         };
-        final SecretStringCredentials c = new SecretStringCredentials(
-                CredentialsScope.SYSTEM,
-                "id",
-                "desc",
-                "spId",
-                "secretId"
-        );
+        final SecretStringCredentials c =
+                new SecretStringCredentials(CredentialsScope.SYSTEM, "id", "desc", "spId", "secretId");
         c.setSecretGetter(secretGetter);
 
         final Secret secret = c.getSecret();
@@ -58,7 +53,7 @@ public class SecretStringCredentialsTest {
         // No security realm, anonymous has Overall/Administer
         final SecretStringCredentials.DescriptorImpl descriptor = new SecretStringCredentials.DescriptorImpl();
 
-        FormValidation result = descriptor.doVerifyConfiguration(null,"", "");
+        FormValidation result = descriptor.doVerifyConfiguration(null, "", "");
         Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
     }
 
@@ -95,5 +90,4 @@ public class SecretStringCredentialsTest {
             Assert.assertThrows(AccessDeniedException3.class, () -> descriptor.doVerifyConfiguration(folder, "", ""));
         }
     }
-
 }

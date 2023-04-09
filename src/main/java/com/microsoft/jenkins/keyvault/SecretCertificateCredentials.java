@@ -14,13 +14,6 @@ import hudson.Util;
 import hudson.model.Item;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
-import jenkins.model.Jenkins;
-import org.apache.commons.codec.binary.Base64;
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.verb.POST;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -31,9 +24,14 @@ import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+import jenkins.model.Jenkins;
+import org.apache.commons.codec.binary.Base64;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
-public class SecretCertificateCredentials extends BaseSecretCredentials
-        implements StandardCertificateCredentials {
+public class SecretCertificateCredentials extends BaseSecretCredentials implements StandardCertificateCredentials {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(SecretCertificateCredentials.class.getName());
@@ -41,12 +39,13 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
     private final Secret password;
 
     @DataBoundConstructor
-    public SecretCertificateCredentials(CredentialsScope scope,
-                                        String id,
-                                        String description,
-                                        String servicePrincipalId,
-                                        String secretIdentifier,
-                                        Secret password) {
+    public SecretCertificateCredentials(
+            CredentialsScope scope,
+            String id,
+            String description,
+            String servicePrincipalId,
+            String secretIdentifier,
+            Secret password) {
         super(scope, id, description, servicePrincipalId, secretIdentifier);
         this.password = password;
     }
@@ -90,7 +89,7 @@ public class SecretCertificateCredentials extends BaseSecretCredentials
             keyStore.load(new ByteArrayInputStream(content), toCharArray(password));
         } catch (CertificateException | NoSuchAlgorithmException | IOException e) {
             final LogRecord lr = new LogRecord(Level.WARNING, "Credentials ID {0}: Could not load keystore from {1}");
-            lr.setParameters(new Object[]{getId(), getSecretIdentifier()});
+            lr.setParameters(new Object[] {getId(), getSecretIdentifier()});
             lr.setThrown(e);
             LOGGER.log(lr);
         }

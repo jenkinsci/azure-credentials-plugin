@@ -3,25 +3,19 @@ package com.microsoft.azure.util;
 import com.cloudbees.plugins.credentials.BaseCredentials;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.model.Item;
 import hudson.security.ACL;
+import java.util.Collections;
 import jenkins.model.Jenkins;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
-import java.util.Collections;
-
 public final class AzureCredentialUtil {
-    private AzureCredentialUtil() {
-
-    }
+    private AzureCredentialUtil() {}
 
     public static AzureBaseCredentials getCredential(@Nullable Item owner, String credentialId) {
         return CredentialsMatchers.firstOrNull(
                 CredentialsProvider.lookupCredentials(
-                        AzureBaseCredentials.class,
-                        owner,
-                        ACL.SYSTEM,
-                        Collections.emptyList()),
+                        AzureBaseCredentials.class, owner, ACL.SYSTEM, Collections.emptyList()),
                 CredentialsMatchers.withId(credentialId));
     }
 
@@ -41,18 +35,12 @@ public final class AzureCredentialUtil {
     public static BaseCredentials getCredential(String credentialId) {
         BaseCredentials credential = CredentialsMatchers.firstOrNull(
                 CredentialsProvider.lookupCredentials(
-                        AzureImdsCredentials.class,
-                        Jenkins.getInstance(),
-                        ACL.SYSTEM,
-                        Collections.emptyList()),
+                        AzureImdsCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()),
                 CredentialsMatchers.withId(credentialId));
         if (credential == null) {
             credential = CredentialsMatchers.firstOrNull(
                     CredentialsProvider.lookupCredentials(
-                            AzureCredentials.class,
-                            Jenkins.getInstance(),
-                            ACL.SYSTEM,
-                            Collections.emptyList()),
+                            AzureCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()),
                     CredentialsMatchers.withId(credentialId));
         }
         return credential;

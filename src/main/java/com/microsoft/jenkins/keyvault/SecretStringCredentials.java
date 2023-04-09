@@ -6,6 +6,7 @@ package com.microsoft.jenkins.keyvault;
 
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsScope;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.util.FormValidation;
@@ -17,18 +18,13 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 public class SecretStringCredentials extends BaseSecretCredentials implements StringCredentials {
 
     private static final long serialVersionUID = 1L;
 
     @DataBoundConstructor
-    public SecretStringCredentials(CredentialsScope scope,
-                                   String id,
-                                   String description,
-                                   String servicePrincipalId,
-                                   String secretIdentifier) {
+    public SecretStringCredentials(
+            CredentialsScope scope, String id, String description, String servicePrincipalId, String secretIdentifier) {
         super(scope, id, description, servicePrincipalId, secretIdentifier);
     }
 
@@ -47,7 +43,6 @@ public class SecretStringCredentials extends BaseSecretCredentials implements St
             return Messages.String_Credentials_Diaplay_Name();
         }
 
-
         @POST
         public FormValidation doVerifyConfiguration(
                 @AncestorInPath Item owner,
@@ -59,8 +54,8 @@ public class SecretStringCredentials extends BaseSecretCredentials implements St
                 owner.checkPermission(Item.CONFIGURE);
             }
 
-            final SecretStringCredentials credentials = new SecretStringCredentials(
-                    CredentialsScope.SYSTEM, "", "", servicePrincipalId, secretIdentifier);
+            final SecretStringCredentials credentials =
+                    new SecretStringCredentials(CredentialsScope.SYSTEM, "", "", servicePrincipalId, secretIdentifier);
 
             try {
                 credentials.getSecret();
@@ -74,6 +69,5 @@ public class SecretStringCredentials extends BaseSecretCredentials implements St
 
             return FormValidation.ok(Messages.String_Credentials_Validation_OK());
         }
-
     }
 }

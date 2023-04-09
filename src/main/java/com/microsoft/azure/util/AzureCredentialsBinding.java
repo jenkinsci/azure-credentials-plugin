@@ -4,25 +4,24 @@
  */
 package com.microsoft.azure.util;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.Symbol;
-import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
-import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
+import org.jenkinsci.plugins.credentialsbinding.MultiBinding;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * Custom binding for AzureCredentials to support reading Azure service principal in both freestyle
@@ -125,10 +124,7 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
     }
 
     @Override
-    public MultiEnvironment bind(@NonNull Run<?, ?> build,
-                                 FilePath workspace,
-                                 Launcher launcher,
-                                 TaskListener listener)
+    public MultiEnvironment bind(@NonNull Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener)
             throws IOException, InterruptedException {
         AzureCredentials credentials = getCredentials(build);
         Map<String, String> map = new HashMap<>();
@@ -142,10 +138,7 @@ public class AzureCredentialsBinding extends MultiBinding<AzureCredentials> {
     @Override
     public Set<String> variables(Run<?, ?> build) {
         return new HashSet<>(Arrays.asList(
-                getSubscriptionIdVariable(),
-                getClientIdVariable(),
-                getClientSecretVariable(),
-                getTenantIdVariable()));
+                getSubscriptionIdVariable(), getClientIdVariable(), getClientSecretVariable(), getTenantIdVariable()));
     }
 
     @Symbol("azureServicePrincipal")

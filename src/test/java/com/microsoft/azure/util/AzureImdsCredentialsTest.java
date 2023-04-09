@@ -24,7 +24,7 @@ public class AzureImdsCredentialsTest {
         // No security realm, anonymous has Overall/Administer
         final AzureImdsCredentials.DescriptorImpl descriptor = new AzureImdsCredentials.DescriptorImpl();
 
-        FormValidation result = descriptor.doVerifyConfiguration(null,"", "", "");
+        FormValidation result = descriptor.doVerifyConfiguration(null, "", "", "");
         Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
     }
 
@@ -58,7 +58,8 @@ public class AzureImdsCredentialsTest {
         final AzureImdsCredentials.DescriptorImpl descriptor = new AzureImdsCredentials.DescriptorImpl();
 
         try (ACLContext ctx = ACL.as(User.getOrCreateByIdOrFullName("user"))) {
-            Assert.assertThrows(AccessDeniedException3.class, () -> descriptor.doVerifyConfiguration(folder, "", "", ""));
+            Assert.assertThrows(
+                    AccessDeniedException3.class, () -> descriptor.doVerifyConfiguration(folder, "", "", ""));
         }
     }
 }

@@ -1,13 +1,11 @@
 package com.microsoft.azure.util;
 
 import com.azure.core.management.AzureEnvironment;
+import java.util.HashMap;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.HashMap;
-
 public final class AzureEnvUtil {
-    static boolean resolveOverride(
-            AzureEnvironment environment, AzureEnvironment.Endpoint endpoint, String stored) {
+    static boolean resolveOverride(AzureEnvironment environment, AzureEnvironment.Endpoint endpoint, String stored) {
         if (StringUtils.isBlank(stored)) {
             return false;
         }
@@ -57,7 +55,5 @@ public final class AzureEnvUtil {
         static final String ENV_AZURE_US_GOVERNMENT = "Azure US Government";
     }
 
-    private AzureEnvUtil() {
-
-    }
+    private AzureEnvUtil() {}
 }

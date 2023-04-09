@@ -16,12 +16,11 @@ import com.microsoft.azure.util.AzureCredentials;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
+import java.net.MalformedURLException;
+import java.net.URL;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
-
-import java.net.MalformedURLException;
-import java.net.URL;
 
 public class BaseSecretCredentials extends BaseStandardCredentials {
 
@@ -31,11 +30,8 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
     private final String credentialId;
     private final String secretIdentifier;
 
-    public BaseSecretCredentials(CredentialsScope scope,
-                                 String id,
-                                 String description,
-                                 String credentialId,
-                                 String secretIdentifier) {
+    public BaseSecretCredentials(
+            CredentialsScope scope, String id, String description, String credentialId, String secretIdentifier) {
         super(scope, id, description);
         this.secretGetter = SecretGetter.DEFAULT;
         this.credentialId = credentialId;
@@ -100,8 +96,7 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
     protected abstract static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
 
         public ListBoxModel doFillServicePrincipalIdItems(
-                @AncestorInPath Item owner,
-                @QueryParameter("servicePrincipalId") String servicePrincipalId) {
+                @AncestorInPath Item owner, @QueryParameter("servicePrincipalId") String servicePrincipalId) {
             StandardListBoxModel model = new StandardListBoxModel();
             model.includeEmptyValue();
             if (owner == null) {
@@ -115,8 +110,7 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
                     return model.includeCurrentValue(servicePrincipalId);
                 }
             }
-            return model
-                    .includeCurrentValue(servicePrincipalId)
+            return model.includeCurrentValue(servicePrincipalId)
                     .includeAs(Jenkins.getAuthentication(), owner, AzureCredentials.class)
                     .includeAs(ACL.SYSTEM, owner, AzureCredentials.class);
         }
