@@ -12,15 +12,14 @@ import com.azure.core.management.exception.ManagementException;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.AzureResourceManager;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 public abstract class IntegrationTestBase {
 
@@ -44,10 +43,11 @@ public abstract class IntegrationTestBase {
             this.clientId = TestEnvironment.loadFromEnv(ENV_PREFIX + "CLIENT_ID");
             this.clientSecret = TestEnvironment.loadFromEnv(ENV_PREFIX + "CLIENT_SECRET");
             this.tenantId = TestEnvironment.loadFromEnv(ENV_PREFIX + "TENANT_ID");
-            this.resourceGroup= TestEnvironment.loadFromEnv(ENV_PREFIX + "RESOURCE_GROUP_PREFIX",
+            this.resourceGroup = TestEnvironment.loadFromEnv(
+                    ENV_PREFIX + "RESOURCE_GROUP_PREFIX",
                     "azure-credentials-tst-" + TestEnvironment.GenerateRandomString(16));
-            this.region = Region.fromName(TestEnvironment.loadFromEnv(
-                    ENV_PREFIX + "REGION", Region.ASIA_SOUTHEAST.name()));
+            this.region =
+                    Region.fromName(TestEnvironment.loadFromEnv(ENV_PREFIX + "REGION", Region.ASIA_SOUTHEAST.name()));
         }
 
         private static String loadFromEnv(final String name) {
@@ -99,9 +99,6 @@ public abstract class IntegrationTestBase {
 
         AzureProfile profile = new AzureProfile(AzureEnvironment.AZURE);
 
-        return AzureResourceManager
-                .authenticate(credential, profile)
-                .withSubscription(testEnv.subscriptionId);
+        return AzureResourceManager.authenticate(credential, profile).withSubscription(testEnv.subscriptionId);
     }
-
 }

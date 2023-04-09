@@ -35,13 +35,13 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
     }
 
     @DataBoundConstructor
-    public AzureImdsCredentials(CredentialsScope scope, String id, String description,
-                                String azureEnvName) {
+    public AzureImdsCredentials(CredentialsScope scope, String id, String description, String azureEnvName) {
         super(scope, id, description);
         setAzureEnvName(azureEnvName);
         setAzureEnvironment(AzureEnvUtil.resolveAzureEnv(azureEnvName));
     }
 
+    @Override
     public String getSubscriptionId() {
         return subscriptionId;
     }
@@ -71,8 +71,7 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
                 credentialBuilder.clientId(getClientId());
             }
 
-            AzureResourceManager azure = AzureResourceManager
-                    .configure()
+            AzureResourceManager azure = AzureResourceManager.configure()
                     .withRetryPolicy(getRetryPolicy())
                     .withHttpClient(HttpClientRetriever.get())
                     .authenticate(credentialBuilder.build(), profile)
@@ -99,10 +98,8 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
         return Main.isUnitTest ? new RetryPolicy(new FixedDelay(0, Duration.ZERO)) : new RetryPolicy();
     }
 
-
     @Extension
-    public static class DescriptorImpl
-            extends BaseStandardCredentials.BaseStandardCredentialsDescriptor {
+    public static class DescriptorImpl extends BaseStandardCredentials.BaseStandardCredentialsDescriptor {
 
         @Override
         public String getDisplayName() {
@@ -146,6 +143,5 @@ public class AzureImdsCredentials extends AbstractManagedIdentitiesCredentials {
 
             return FormValidation.ok(Messages.Azure_MI_Config_Success());
         }
-
     }
 }

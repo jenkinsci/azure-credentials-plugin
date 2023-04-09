@@ -16,6 +16,12 @@ import hudson.security.ACLContext;
 import hudson.security.AccessDeniedException3;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
+import java.io.IOException;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
@@ -23,13 +29,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
-
-import java.io.IOException;
-import java.security.Key;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
 
 public class SecretCertificateCredentialsTest {
 
@@ -54,20 +53,14 @@ public class SecretCertificateCredentialsTest {
 
             return secretBundle;
         }
-
     }
 
     @Test
-    public void getKeyStore() throws IOException, KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
+    public void getKeyStore()
+            throws IOException, KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
         final SecretCertificateCredentials c = new SecretCertificateCredentials(
-                CredentialsScope.SYSTEM,
-                "id",
-                "desc",
-                "spId",
-                "secretId",
-                Secret.fromString("123456")
-        );
-        final String cert= IOUtils.toString(getClass().getResourceAsStream("cert.pfx.b64"), "UTF-8");
+                CredentialsScope.SYSTEM, "id", "desc", "spId", "secretId", Secret.fromString("123456"));
+        final String cert = IOUtils.toString(getClass().getResourceAsStream("cert.pfx.b64"), "UTF-8");
         c.setSecretGetter(new MockCertSecretGetter(cert));
 
         final KeyStore keyStore = c.getKeyStore();
@@ -80,7 +73,8 @@ public class SecretCertificateCredentialsTest {
     @Test
     public void descriptorVerifyConfigurationAsAdmin() {
         // No security realm, anonymous has Overall/Administer
-        final SecretCertificateCredentials.DescriptorImpl descriptor = new SecretCertificateCredentials.DescriptorImpl();
+        final SecretCertificateCredentials.DescriptorImpl descriptor =
+                new SecretCertificateCredentials.DescriptorImpl();
 
         FormValidation result = descriptor.doVerifyConfiguration(null, "", "", Secret.fromString(""));
         Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
@@ -95,7 +89,8 @@ public class SecretCertificateCredentialsTest {
         authorizationStrategy.grant(Item.CONFIGURE).onFolders(folder).to("user");
         j.jenkins.setAuthorizationStrategy(authorizationStrategy);
 
-        final SecretCertificateCredentials.DescriptorImpl descriptor = new SecretCertificateCredentials.DescriptorImpl();
+        final SecretCertificateCredentials.DescriptorImpl descriptor =
+                new SecretCertificateCredentials.DescriptorImpl();
 
         try (ACLContext ctx = ACL.as(User.getOrCreateByIdOrFullName("user"))) {
             FormValidation result = descriptor.doVerifyConfiguration(folder, "", "", Secret.fromString(""));
@@ -113,10 +108,13 @@ public class SecretCertificateCredentialsTest {
         authorizationStrategy.grant(Jenkins.READ).everywhere().to("user");
         j.jenkins.setAuthorizationStrategy(authorizationStrategy);
 
-        final SecretCertificateCredentials.DescriptorImpl descriptor = new SecretCertificateCredentials.DescriptorImpl();
+        final SecretCertificateCredentials.DescriptorImpl descriptor =
+                new SecretCertificateCredentials.DescriptorImpl();
 
         try (ACLContext ctx = ACL.as(User.getOrCreateByIdOrFullName("user"))) {
-            Assert.assertThrows(AccessDeniedException3.class, () -> descriptor.doVerifyConfiguration(folder, "", "", Secret.fromString("")));
+            Assert.assertThrows(
+                    AccessDeniedException3.class,
+                    () -> descriptor.doVerifyConfiguration(folder, "", "", Secret.fromString("")));
         }
     }
 }

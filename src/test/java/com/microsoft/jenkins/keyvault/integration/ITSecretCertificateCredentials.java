@@ -11,36 +11,37 @@ import com.microsoft.jenkins.keyvault.Messages;
 import com.microsoft.jenkins.keyvault.SecretCertificateCredentials;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
-import java.nio.charset.StandardCharsets;
-import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import org.apache.commons.io.IOUtils;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ITSecretCertificateCredentials extends KeyVaultIntegrationTestBase {
 
     @Test
-    public void getKeyStore() throws IOException, KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
-        final String cert= IOUtils.toString(getClass().getResourceAsStream("../cert.pfx.b64"), StandardCharsets.UTF_8);
+    public void getKeyStore()
+            throws IOException, KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
+        final String cert = IOUtils.toString(getClass().getResourceAsStream("../cert.pfx.b64"), StandardCharsets.UTF_8);
         final KeyVaultSecret secretBundle = createSecret("secret-cert", cert);
         final String secretIdentifier = secretBundle.getId();
         final Secret password = Secret.fromString("123456");
 
         // Verify configuration
-        final SecretCertificateCredentials.DescriptorImpl descriptor = new SecretCertificateCredentials.DescriptorImpl();
-        final FormValidation result = descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId, secretIdentifier, password);
+        final SecretCertificateCredentials.DescriptorImpl descriptor =
+                new SecretCertificateCredentials.DescriptorImpl();
+        final FormValidation result =
+                descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId, secretIdentifier, password);
         Assert.assertEquals(FormValidation.Kind.OK, result.kind);
 
         // Get key store
         final SecretCertificateCredentials credentials = new SecretCertificateCredentials(
-                CredentialsScope.SYSTEM, "", "", jenkinsAzureCredentialsId, secretIdentifier, password
-        );
+                CredentialsScope.SYSTEM, "", "", jenkinsAzureCredentialsId, secretIdentifier, password);
         final KeyStore keyStore = credentials.getKeyStore();
         Assert.assertTrue(keyStore.containsAlias("msft"));
         Assert.assertEquals(1, keyStore.size());
@@ -53,15 +54,15 @@ public class ITSecretCertificateCredentials extends KeyVaultIntegrationTestBase 
         final String secretIdentifier = vaultUri + "/secrets/not-found/869660651aa3436994bd7290704c9394";
 
         // Verify configuration
-        final SecretCertificateCredentials.DescriptorImpl descriptor = new SecretCertificateCredentials.DescriptorImpl();
-        final FormValidation result = descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId,
-                secretIdentifier, Secret.fromString(""));
+        final SecretCertificateCredentials.DescriptorImpl descriptor =
+                new SecretCertificateCredentials.DescriptorImpl();
+        final FormValidation result = descriptor.doVerifyConfiguration(
+                null, jenkinsAzureCredentialsId, secretIdentifier, Secret.fromString(""));
         Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
 
         // Get key store
         final SecretCertificateCredentials credentials = new SecretCertificateCredentials(
-                CredentialsScope.SYSTEM, "", "", jenkinsAzureCredentialsId, secretIdentifier, Secret.fromString("")
-        );
+                CredentialsScope.SYSTEM, "", "", jenkinsAzureCredentialsId, secretIdentifier, Secret.fromString(""));
         try {
             final KeyStore keyStore = credentials.getKeyStore();
             Assert.fail("Should throw exception but not");
@@ -72,14 +73,16 @@ public class ITSecretCertificateCredentials extends KeyVaultIntegrationTestBase 
 
     @Test
     public void getKeyStoreNoPrivateKey() throws IOException {
-        final String cert = IOUtils.toString(getClass().getResourceAsStream("../cert_no_private.pfx.b64"), StandardCharsets.UTF_8);
+        final String cert =
+                IOUtils.toString(getClass().getResourceAsStream("../cert_no_private.pfx.b64"), StandardCharsets.UTF_8);
         final KeyVaultSecret secretBundle = createSecret("secret-cert-no-private", cert);
         final String secretIdentifier = secretBundle.getId().toString();
 
         // Verify configuration
-        final SecretCertificateCredentials.DescriptorImpl descriptor = new SecretCertificateCredentials.DescriptorImpl();
-        final FormValidation result = descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId,
-                secretIdentifier, Secret.fromString(""));
+        final SecretCertificateCredentials.DescriptorImpl descriptor =
+                new SecretCertificateCredentials.DescriptorImpl();
+        final FormValidation result = descriptor.doVerifyConfiguration(
+                null, jenkinsAzureCredentialsId, secretIdentifier, Secret.fromString(""));
         Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
         Assert.assertEquals(Messages.Certificate_Credentials_Validation_No_Private_Key(), result.getMessage());
     }

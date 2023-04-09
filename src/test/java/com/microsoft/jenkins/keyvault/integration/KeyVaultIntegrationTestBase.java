@@ -17,11 +17,10 @@ import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.microsoft.azure.util.AzureCredentials;
 import com.microsoft.jenkins.integration.IntegrationTestBase;
+import hudson.util.Secret;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-
-import hudson.util.Secret;
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -38,7 +37,9 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
         // Create Azure KeyVault
         final AzureResourceManager azureClient = IntegrationTestBase.getAzureClient();
         vaultName = "tst-vault-" + TestEnvironment.GenerateRandomString(5);
-        final Vault vault = azureClient.vaults().define(vaultName)
+        final Vault vault = azureClient
+                .vaults()
+                .define(vaultName)
                 .withRegion(testEnv.region)
                 .withNewResourceGroup(testEnv.resourceGroup)
                 .defineAccessPolicy()
@@ -60,7 +61,8 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
                 Secret.fromString(testEnv.clientSecret));
         credentials.setTenant(testEnv.tenantId);
 
-        final CredentialsStore store = CredentialsProvider.lookupStores(j.jenkins).iterator().next();
+        final CredentialsStore store =
+                CredentialsProvider.lookupStores(j.jenkins).iterator().next();
         try {
             store.addCredentials(Domain.global(), credentials);
         } catch (IOException e) {
@@ -80,8 +82,8 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
             try {
                 createSecret(String.format("wait-for-key-vault-available-%d", i), "");
             } catch (Exception ex) {
-                LOGGER.info(String.format("Key vault is not available due to %s. Will retry after 1 second.",
-                        ex.getMessage()));
+                LOGGER.info(String.format(
+                        "Key vault is not available due to %s. Will retry after 1 second.", ex.getMessage()));
                 Thread.sleep(TimeUnit.SECONDS.toMillis(1));
                 continue;
             }
@@ -102,5 +104,4 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
         SecretClient secretClient = AzureCredentials.createKeyVaultClient(clientSecretCredential, vaultUri);
         return secretClient.setSecret(keyVaultSecret);
     }
-
 }

@@ -22,13 +22,13 @@ public class ITSecretStringCredentials extends KeyVaultIntegrationTestBase {
 
         // Verify configuration
         final SecretStringCredentials.DescriptorImpl descriptor = new SecretStringCredentials.DescriptorImpl();
-        final FormValidation result = descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId, secretIdentifier);
+        final FormValidation result =
+                descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId, secretIdentifier);
         Assert.assertEquals(FormValidation.Kind.OK, result.kind);
 
         // Get secret
         final SecretStringCredentials credentials = new SecretStringCredentials(
-                CredentialsScope.SYSTEM, "", "", jenkinsAzureCredentialsId, secretIdentifier
-        );
+                CredentialsScope.SYSTEM, "", "", jenkinsAzureCredentialsId, secretIdentifier);
         final Secret secret = credentials.getSecret();
         Assert.assertEquals("I'm secret", secret.getPlainText());
     }
@@ -39,14 +39,13 @@ public class ITSecretStringCredentials extends KeyVaultIntegrationTestBase {
 
         // Verify configuration
         final SecretStringCredentials.DescriptorImpl descriptor = new SecretStringCredentials.DescriptorImpl();
-        final FormValidation result = descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId,
-                secretIdentifier);
+        final FormValidation result =
+                descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId, secretIdentifier);
         Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
 
         // Get secret
         final SecretStringCredentials credentials = new SecretStringCredentials(
-                CredentialsScope.SYSTEM, "", "", jenkinsAzureCredentialsId, secretIdentifier
-        );
+                CredentialsScope.SYSTEM, "", "", jenkinsAzureCredentialsId, secretIdentifier);
         try {
             final Secret secret = credentials.getSecret();
             Assert.fail("Should throw exception but not");

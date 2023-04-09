@@ -16,18 +16,18 @@ public final class SecretClientCache {
     private static final Duration EXPIRE_AFTER = Duration.ofMinutes(50);
 
     private static final LoadingCache<CacheKey, SecretClient> CACHE = Caffeine.newBuilder()
-        .maximumSize(MAX_SIZE)
-        .expireAfterWrite(EXPIRE_AFTER)
-        .build(SecretClientCache::createClient);
+            .maximumSize(MAX_SIZE)
+            .expireAfterWrite(EXPIRE_AFTER)
+            .build(SecretClientCache::createClient);
 
-    private SecretClientCache() {
-    }
+    private SecretClientCache() {}
 
     public static SecretClient get(String credentialsId, String vaultUrl) {
         SecretClient secretClient = CACHE.get(new CacheKey(credentialsId, vaultUrl));
         if (secretClient == null) {
-            throw new RuntimeException(String.format("client null when it should not be, vault url: "
-                + "%s, credentialId: %s", vaultUrl, credentialsId));
+            throw new RuntimeException(String.format(
+                    "client null when it should not be, vault url: " + "%s, credentialId: %s",
+                    vaultUrl, credentialsId));
         }
         return secretClient;
     }
@@ -43,10 +43,7 @@ public final class SecretClientCache {
     private static SecretClient createClient(CacheKey key) {
         TokenCredential keyVaultCredentials = AzureCredentials.getSystemCredentialById(key.credentialsId);
 
-        return AzureCredentials.createKeyVaultClient(
-            keyVaultCredentials,
-            key.vaultUrl
-        );
+        return AzureCredentials.createKeyVaultClient(keyVaultCredentials, key.vaultUrl);
     }
 
     private static class CacheKey {
