@@ -42,7 +42,7 @@
   <properties>
     <changelist>9999-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/azure-credentials-plugin</gitHubRepo>
-    <jenkins.version>2.361.4</jenkins.version>
+    <jenkins.version>2.387.3</jenkins.version>
     <azuresdk.version>1.41.0</azuresdk.version>
     <hpi.compatibleSinceVersion>4.0.0</hpi.compatibleSinceVersion>
     <spotless.check.skip>false</spotless.check.skip>
@@ -52,8 +52,8 @@
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.361.x</artifactId>
-        <version>2102.v854b_fec19c92</version>
+        <artifactId>bom-2.387.x</artifactId>
+        <version>2329.v078520e55c19</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
