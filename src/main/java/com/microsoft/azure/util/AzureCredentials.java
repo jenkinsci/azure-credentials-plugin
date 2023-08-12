@@ -599,11 +599,8 @@ public class AzureCredentials extends AzureBaseCredentials {
         return data.clientId.getPlainText();
     }
 
-    public String getClientSecret() {
-        if (StringUtils.isEmpty(data.clientSecret.getPlainText())) {
-            return "";
-        }
-        return data.clientSecret.getEncryptedValue();
+    public Secret getClientSecret() {
+        return data.clientSecret;
     }
 
     public String getPlainClientSecret() {
