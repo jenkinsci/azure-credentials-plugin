@@ -537,6 +537,7 @@ public class AzureCredentials extends AzureBaseCredentials {
             AzureCredentials azureCredential = azureCredentials.get(0);
 
             credential = new ClientSecretCredentialBuilder()
+                    .authorityHost(azureCredential.getAzureEnvironment().getActiveDirectoryEndpoint())
                     .clientId(azureCredential.getClientId())
                     .clientSecret(azureCredential.getPlainClientSecret())
                     .httpClient(HttpClientRetriever.get())
