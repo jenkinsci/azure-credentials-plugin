@@ -85,7 +85,7 @@ public class SecretCertificateCredentials extends BaseSecretCredentials implemen
         }
 
         try {
-            final byte[] content = Base64.getDecoder().decode(secret.getValue());
+            final byte[] content = Base64.getMimeDecoder().decode(secret.getValue());
             keyStore.load(new ByteArrayInputStream(content), toCharArray(password));
         } catch (CertificateException | NoSuchAlgorithmException | IOException e) {
             final LogRecord lr = new LogRecord(Level.WARNING, "Credentials ID {0}: Could not load keystore from {1}");
