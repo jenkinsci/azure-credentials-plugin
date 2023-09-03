@@ -20,12 +20,12 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.Base64;
 import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
-import org.apache.commons.codec.binary.Base64;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -85,7 +85,7 @@ public class SecretCertificateCredentials extends BaseSecretCredentials implemen
         }
 
         try {
-            final byte[] content = Base64.decodeBase64(secret.getValue());
+            final byte[] content = Base64.getDecoder().decode(secret.getValue());
             keyStore.load(new ByteArrayInputStream(content), toCharArray(password));
         } catch (CertificateException | NoSuchAlgorithmException | IOException e) {
             final LogRecord lr = new LogRecord(Level.WARNING, "Credentials ID {0}: Could not load keystore from {1}");
