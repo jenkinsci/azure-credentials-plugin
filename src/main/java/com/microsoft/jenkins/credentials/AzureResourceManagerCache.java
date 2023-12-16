@@ -18,6 +18,7 @@ package com.microsoft.jenkins.credentials;
 import com.azure.resourcemanager.AzureResourceManager;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -34,24 +35,14 @@ public final class AzureResourceManagerCache {
 
     private AzureResourceManagerCache() {}
 
+    @CheckForNull
     public static AzureResourceManager get(String credentialsId) {
-        AzureResourceManager resourceManager = CACHE.get(new CacheKey(credentialsId));
-        if (resourceManager == null) {
-            throw new RuntimeException(
-                    String.format("client null when it should not be, credentials ID: " + "%s", credentialsId));
-        }
-        return resourceManager;
+        return CACHE.get(new CacheKey(credentialsId));
     }
 
+    @CheckForNull
     public static AzureResourceManager get(String credentialsId, String subscriptionId) {
-        AzureResourceManager resourceManager = CACHE.get(new CacheKey(credentialsId, subscriptionId));
-
-        if (resourceManager == null) {
-            throw new RuntimeException(String.format(
-                    "client null when it should not be, credentials ID: " + "%s, subscriptionId: %s",
-                    credentialsId, subscriptionId));
-        }
-        return resourceManager;
+        return CACHE.get(new CacheKey(credentialsId, subscriptionId));
     }
 
     /**
