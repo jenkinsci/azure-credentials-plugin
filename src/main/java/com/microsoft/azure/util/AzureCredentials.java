@@ -25,6 +25,7 @@ import com.cloudbees.plugins.credentials.domains.DomainCredentials;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;
 import com.microsoft.jenkins.credentials.AzureResourceManagerCache;
+import com.microsoft.jenkins.credentials.BlobServiceClientCache;
 import com.microsoft.jenkins.keyvault.SecretClientCache;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -453,6 +454,7 @@ public class AzureCredentials extends AzureBaseCredentials {
         data = new ServicePrincipal(subscriptionId, clientId, clientSecret);
         SecretClientCache.invalidateCache();
         AzureResourceManagerCache.invalidateCache();
+        BlobServiceClientCache.invalidateCache();
     }
 
     /**
