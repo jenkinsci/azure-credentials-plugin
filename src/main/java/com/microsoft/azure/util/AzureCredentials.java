@@ -7,6 +7,7 @@ package com.microsoft.azure.util;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
+import com.azure.identity.ClientCertificateCredentialBuilder;
 import com.azure.identity.ClientSecretCredential;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.identity.ManagedIdentityCredentialBuilder;
@@ -162,25 +163,7 @@ public class AzureCredentials extends AzureBaseCredentials {
             if (certificate == null) {
                 return getCredentials(CertificateCredentialsImpl.class, certificateId, Jenkins.getAuthentication());
             }
-            return null;
-        }
-
-        @Nullable
-        public byte[] getCertificateBytes() {
-            CertificateCredentialsImpl certificate = getCertificate();
-            if (certificate == null) {
-                return null;
-            }
-            return certificate.getKeyStoreSource().getKeyStoreBytes();
-        }
-
-        @Nullable
-        public String getCertificatePassword() {
-            CertificateCredentialsImpl certificate = getCertificate();
-            if (certificate == null) {
-                return null;
-            }
-            return certificate.getPassword().getPlainText();
+            return certificate;
         }
 
         public String getTenant() {
@@ -372,20 +355,22 @@ public class AzureCredentials extends AzureBaseCredentials {
                     if (certificate == null) {
                         throw new ValidationException(Messages.Azure_ClientCertificate_NotFound());
                     }
+
+                    @SuppressWarnings("removal") // no compatible API that I can see
                     ByteArrayInputStream certificateBytes = new ByteArrayInputStream(
                             certificate.getKeyStoreSource().getKeyStoreBytes());
 
                     IdentityClientOptions identityClientOptions = new IdentityClientOptions();
                     identityClientOptions.setHttpClient(HttpClientRetriever.get());
 
-                    credential = new ClientCertificateCredential2(
-                            getTenant(),
-                            getClientId(),
-                            null,
-                            // this is package-private in the default sdk method which is why we have our own class
-                            certificateBytes,
-                            certificate.getPassword().getPlainText(),
-                            identityClientOptions);
+                    credential = new ClientCertificateCredentialBuilder()
+                            .authorityHost(profile.getEnvironment().getActiveDirectoryEndpoint())
+                            .clientId(getClientId())
+                            .pemCertificate(certificateBytes)
+                            .tenantId(getTenant())
+                            .httpClient(HttpClientRetriever.get())
+                            .build();
+
                 } else {
                     credential = new ClientSecretCredentialBuilder()
                             .authorityHost(profile.getEnvironment().getActiveDirectoryEndpoint())
