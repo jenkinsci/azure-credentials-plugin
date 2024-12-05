@@ -21,6 +21,7 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainCredentials;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
@@ -38,8 +39,16 @@ import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import io.jenkins.plugins.azuresdk.HttpClientRetriever;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectStreamException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableEntryException;
+import java.security.cert.CertificateException;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
@@ -151,17 +160,17 @@ public class AzureCredentials extends AzureBaseCredentials {
          * @return the certificate configured in the Service Principal.
          */
         @Nullable
-        CertificateCredentialsImpl getCertificate() {
+        StandardCertificateCredentials getCertificate() {
             if (StringUtils.isNotEmpty(clientSecret.getPlainText())) {
                 return null;
             }
             if (StringUtils.isEmpty(certificateId)) {
                 return null;
             }
-            CertificateCredentialsImpl certificate =
-                    getCredentials(CertificateCredentialsImpl.class, certificateId, ACL.SYSTEM);
+            StandardCertificateCredentials certificate =
+                    getCredentials(StandardCertificateCredentials.class, certificateId, ACL.SYSTEM);
             if (certificate == null) {
-                return getCredentials(CertificateCredentialsImpl.class, certificateId, Jenkins.getAuthentication());
+                return getCredentials(StandardCertificateCredentials.class, certificateId, Jenkins.getAuthentication());
             }
             return certificate;
         }
@@ -351,14 +360,13 @@ public class AzureCredentials extends AzureBaseCredentials {
                 TokenCredential credential;
 
                 if (StringUtils.isEmpty(secret)) {
-                    CertificateCredentialsImpl certificate = getCertificate();
+                    StandardCertificateCredentials certificate = getCertificate();
                     if (certificate == null) {
                         throw new ValidationException(Messages.Azure_ClientCertificate_NotFound());
                     }
 
-                    @SuppressWarnings("removal") // no compatible API that I can see
-                    ByteArrayInputStream certificateBytes = new ByteArrayInputStream(
-                            certificate.getKeyStoreSource().getKeyStoreBytes());
+                    byte[] pkcs12Bytes = getPKCS12Bytes(certificate.getKeyStore(), certificate.getPassword());
+                    ByteArrayInputStream certificateBytes = new ByteArrayInputStream(pkcs12Bytes);
 
                     IdentityClientOptions identityClientOptions = new IdentityClientOptions();
                     identityClientOptions.setHttpClient(HttpClientRetriever.get());
@@ -395,6 +403,35 @@ public class AzureCredentials extends AzureBaseCredentials {
                 throw new ValidationException(Messages.Azure_CantValidate() + ": " + e.getMessage(), e);
             }
             throw new ValidationException(Messages.Azure_Invalid_SubscriptionId());
+        }
+
+        private KeyStore toPKCS12(KeyStore source, String password) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableEntryException {
+            if (source.getType().equalsIgnoreCase("pkcs12")) {
+                return source;
+            }
+            KeyStore ks = KeyStore.getInstance("pkcs12");
+            ks.load(null, password.toCharArray());
+            Enumeration<String> aliases = source.aliases();
+            while (aliases.hasMoreElements()) {
+                String alias = aliases.nextElement();
+                if (source.isKeyEntry(alias)) {
+                    KeyStore.Entry entry = source.getEntry(alias, new KeyStore.PasswordProtection(password.toCharArray()));
+                    if (entry instanceof KeyStore.PrivateKeyEntry) {
+                        // the privateKeyEntry also contains the certificate chain!
+                        ks.setEntry(alias, entry, new KeyStore.PasswordProtection(password.toCharArray()));
+                    }
+                }
+                return ks;
+            }
+            return ks;
+        }
+
+        private byte[] getPKCS12Bytes(KeyStore ks, Secret password) throws Exception {
+            String plainTextPassword = Secret.toString(password);
+            ks = toPKCS12(ks, plainTextPassword);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ks.store(bos, plainTextPassword.toCharArray());
+            return bos.toByteArray();
         }
 
         private static final int TOKEN_ENDPOINT_URL_ENDPOINT_POSTION = 3;
