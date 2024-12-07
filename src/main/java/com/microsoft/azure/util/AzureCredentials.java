@@ -25,7 +25,6 @@ import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainCredentials;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
-import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;
 import com.microsoft.jenkins.credentials.AzureResourceManagerCache;
 import com.microsoft.jenkins.credentials.BlobServiceClientCache;
 import com.microsoft.jenkins.keyvault.SecretClientCache;
@@ -45,10 +44,8 @@ import java.io.ObjectStreamException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
@@ -365,7 +362,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                         throw new ValidationException(Messages.Azure_ClientCertificate_NotFound());
                     }
 
-                    byte[] pkcs12Bytes = getPKCS12Bytes(certificate.getKeyStore(), certificate.getPassword());
+                    byte[] pkcs12Bytes = getPfxBytes(certificate.getKeyStore(), certificate.getPassword());
                     ByteArrayInputStream certificateBytes = new ByteArrayInputStream(pkcs12Bytes);
 
                     IdentityClientOptions identityClientOptions = new IdentityClientOptions();
@@ -374,7 +371,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                     credential = new ClientCertificateCredentialBuilder()
                             .authorityHost(profile.getEnvironment().getActiveDirectoryEndpoint())
                             .clientId(getClientId())
-                            .pemCertificate(certificateBytes)
+                            .pfxCertificate(certificateBytes)
                             .tenantId(getTenant())
                             .httpClient(HttpClientRetriever.get())
                             .build();
@@ -399,39 +396,20 @@ public class AzureCredentials extends AzureBaseCredentials {
                         return true;
                     }
                 }
-            } catch (Exception e) {
+            } catch (CertificateException | KeyStoreException | IOException | NoSuchAlgorithmException e) {
                 throw new ValidationException(Messages.Azure_CantValidate() + ": " + e.getMessage(), e);
             }
             throw new ValidationException(Messages.Azure_Invalid_SubscriptionId());
         }
 
-        private KeyStore toPKCS12(KeyStore source, String password) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableEntryException {
-            if (source.getType().equalsIgnoreCase("pkcs12")) {
-                return source;
-            }
-            KeyStore ks = KeyStore.getInstance("pkcs12");
-            ks.load(null, password.toCharArray());
-            Enumeration<String> aliases = source.aliases();
-            while (aliases.hasMoreElements()) {
-                String alias = aliases.nextElement();
-                if (source.isKeyEntry(alias)) {
-                    KeyStore.Entry entry = source.getEntry(alias, new KeyStore.PasswordProtection(password.toCharArray()));
-                    if (entry instanceof KeyStore.PrivateKeyEntry) {
-                        // the privateKeyEntry also contains the certificate chain!
-                        ks.setEntry(alias, entry, new KeyStore.PasswordProtection(password.toCharArray()));
-                    }
-                }
-                return ks;
-            }
-            return ks;
-        }
-
-        private byte[] getPKCS12Bytes(KeyStore ks, Secret password) throws Exception {
+        private static byte[] getPfxBytes(KeyStore ks, Secret password)
+                throws CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException {
             String plainTextPassword = Secret.toString(password);
-            ks = toPKCS12(ks, plainTextPassword);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ks.store(bos, plainTextPassword.toCharArray());
-            return bos.toByteArray();
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ks.store(out, plainTextPassword.toCharArray());
+
+            return out.toByteArray();
         }
 
         private static final int TOKEN_ENDPOINT_URL_ENDPOINT_POSTION = 3;
@@ -587,6 +565,30 @@ public class AzureCredentials extends AzureBaseCredentials {
         if (credentials instanceof AzureCredentials) {
             AzureCredentials azureCredentials = (AzureCredentials) credentials;
 
+            String secret = azureCredentials.getPlainClientSecret();
+            if (StringUtils.isEmpty(secret) && StringUtils.isNotBlank(azureCredentials.getCertificateId())) {
+                StandardCertificateCredentials certificate = getCertificateCredentials(azureCredentials);
+
+                byte[] pkcs12Bytes;
+                try {
+                    pkcs12Bytes = ServicePrincipal.getPfxBytes(certificate.getKeyStore(), certificate.getPassword());
+                } catch (CertificateException | KeyStoreException | IOException | NoSuchAlgorithmException e) {
+                    throw new RuntimeException(e);
+                }
+                ByteArrayInputStream certificateBytes = new ByteArrayInputStream(pkcs12Bytes);
+
+                IdentityClientOptions identityClientOptions = new IdentityClientOptions();
+                identityClientOptions.setHttpClient(HttpClientRetriever.get());
+
+                return new ClientCertificateCredentialBuilder()
+                        .clientId(azureCredentials.getClientId())
+                        .pfxCertificate(certificateBytes)
+                        .tenantId(azureCredentials.getTenant())
+                        .authorityHost(azureCredentials.getAzureEnvironment().getActiveDirectoryEndpoint())
+                        .httpClient(HttpClientRetriever.get())
+                        .build();
+            }
+
             return new ClientSecretCredentialBuilder()
                     .clientId(azureCredentials.getClientId())
                     .clientSecret(azureCredentials.getPlainClientSecret())
@@ -609,6 +611,21 @@ public class AzureCredentials extends AzureBaseCredentials {
             return credentialBuilder.build();
         }
         throw new RuntimeException(String.format("Unsupported credential: %s", credentials.getId()));
+    }
+
+    private static StandardCertificateCredentials getCertificateCredentials(AzureCredentials azureCredentials) {
+        String certificateId = azureCredentials.getCertificateId();
+        StandardCertificateCredentials certificate =
+                getCredentials(StandardCertificateCredentials.class, certificateId, ACL.SYSTEM);
+        if (certificate == null) {
+            certificate =
+                    getCredentials(StandardCertificateCredentials.class, certificateId, Jenkins.getAuthentication());
+        }
+
+        if (certificate == null) {
+            throw new RuntimeException("Couldn't find certificate: " + azureCredentials.getCertificateId());
+        }
+        return certificate;
     }
 
     public static TokenCredential getCredentialById(Item owner, String credentialId) {
@@ -836,8 +853,8 @@ public class AzureCredentials extends AzureBaseCredentials {
             }
 
             return model.includeCurrentValue(certificateId)
-                    .includeAs(Jenkins.getAuthentication(), owner, CertificateCredentialsImpl.class)
-                    .includeAs(ACL.SYSTEM, owner, CertificateCredentialsImpl.class);
+                    .includeAs(Jenkins.getAuthentication(), owner, StandardCertificateCredentials.class)
+                    .includeAs(ACL.SYSTEM, owner, StandardCertificateCredentials.class);
         }
 
         public ListBoxModel doFillAzureEnvironmentNameItems() {
