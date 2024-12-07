@@ -7,6 +7,7 @@ package com.microsoft.azure.util;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
+import com.azure.identity.ClientCertificateCredentialBuilder;
 import com.azure.identity.ClientSecretCredential;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.identity.ManagedIdentityCredentialBuilder;
@@ -20,10 +21,10 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainCredentials;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
-import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl;
 import com.microsoft.jenkins.credentials.AzureResourceManagerCache;
 import com.microsoft.jenkins.credentials.BlobServiceClientCache;
 import com.microsoft.jenkins.keyvault.SecretClientCache;
@@ -37,7 +38,13 @@ import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import io.jenkins.plugins.azuresdk.HttpClientRetriever;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectStreamException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Collections;
 import java.util.List;
 import jenkins.model.Jenkins;
@@ -150,37 +157,19 @@ public class AzureCredentials extends AzureBaseCredentials {
          * @return the certificate configured in the Service Principal.
          */
         @Nullable
-        CertificateCredentialsImpl getCertificate() {
+        StandardCertificateCredentials getCertificate() {
             if (StringUtils.isNotEmpty(clientSecret.getPlainText())) {
                 return null;
             }
             if (StringUtils.isEmpty(certificateId)) {
                 return null;
             }
-            CertificateCredentialsImpl certificate =
-                    getCredentials(CertificateCredentialsImpl.class, certificateId, ACL.SYSTEM);
+            StandardCertificateCredentials certificate =
+                    getCredentials(StandardCertificateCredentials.class, certificateId, ACL.SYSTEM);
             if (certificate == null) {
-                return getCredentials(CertificateCredentialsImpl.class, certificateId, Jenkins.getAuthentication());
+                return getCredentials(StandardCertificateCredentials.class, certificateId, Jenkins.getAuthentication());
             }
-            return null;
-        }
-
-        @Nullable
-        public byte[] getCertificateBytes() {
-            CertificateCredentialsImpl certificate = getCertificate();
-            if (certificate == null) {
-                return null;
-            }
-            return certificate.getKeyStoreSource().getKeyStoreBytes();
-        }
-
-        @Nullable
-        public String getCertificatePassword() {
-            CertificateCredentialsImpl certificate = getCertificate();
-            if (certificate == null) {
-                return null;
-            }
-            return certificate.getPassword().getPlainText();
+            return certificate;
         }
 
         public String getTenant() {
@@ -368,24 +357,25 @@ public class AzureCredentials extends AzureBaseCredentials {
                 TokenCredential credential;
 
                 if (StringUtils.isEmpty(secret)) {
-                    CertificateCredentialsImpl certificate = getCertificate();
+                    StandardCertificateCredentials certificate = getCertificate();
                     if (certificate == null) {
                         throw new ValidationException(Messages.Azure_ClientCertificate_NotFound());
                     }
-                    ByteArrayInputStream certificateBytes = new ByteArrayInputStream(
-                            certificate.getKeyStoreSource().getKeyStoreBytes());
+
+                    byte[] pkcs12Bytes = getPfxBytes(certificate.getKeyStore(), certificate.getPassword());
+                    ByteArrayInputStream certificateBytes = new ByteArrayInputStream(pkcs12Bytes);
 
                     IdentityClientOptions identityClientOptions = new IdentityClientOptions();
                     identityClientOptions.setHttpClient(HttpClientRetriever.get());
 
-                    credential = new ClientCertificateCredential2(
-                            getTenant(),
-                            getClientId(),
-                            null,
-                            // this is package-private in the default sdk method which is why we have our own class
-                            certificateBytes,
-                            certificate.getPassword().getPlainText(),
-                            identityClientOptions);
+                    credential = new ClientCertificateCredentialBuilder()
+                            .authorityHost(profile.getEnvironment().getActiveDirectoryEndpoint())
+                            .clientId(getClientId())
+                            .pfxCertificate(certificateBytes)
+                            .tenantId(getTenant())
+                            .httpClient(HttpClientRetriever.get())
+                            .build();
+
                 } else {
                     credential = new ClientSecretCredentialBuilder()
                             .authorityHost(profile.getEnvironment().getActiveDirectoryEndpoint())
@@ -406,10 +396,20 @@ public class AzureCredentials extends AzureBaseCredentials {
                         return true;
                     }
                 }
-            } catch (Exception e) {
+            } catch (CertificateException | KeyStoreException | IOException | NoSuchAlgorithmException e) {
                 throw new ValidationException(Messages.Azure_CantValidate() + ": " + e.getMessage(), e);
             }
             throw new ValidationException(Messages.Azure_Invalid_SubscriptionId());
+        }
+
+        private static byte[] getPfxBytes(KeyStore ks, Secret password)
+                throws CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException {
+            String plainTextPassword = Secret.toString(password);
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ks.store(out, plainTextPassword.toCharArray());
+
+            return out.toByteArray();
         }
 
         private static final int TOKEN_ENDPOINT_URL_ENDPOINT_POSTION = 3;
@@ -565,6 +565,30 @@ public class AzureCredentials extends AzureBaseCredentials {
         if (credentials instanceof AzureCredentials) {
             AzureCredentials azureCredentials = (AzureCredentials) credentials;
 
+            String secret = azureCredentials.getPlainClientSecret();
+            if (StringUtils.isEmpty(secret) && StringUtils.isNotBlank(azureCredentials.getCertificateId())) {
+                StandardCertificateCredentials certificate = getCertificateCredentials(azureCredentials);
+
+                byte[] pkcs12Bytes;
+                try {
+                    pkcs12Bytes = ServicePrincipal.getPfxBytes(certificate.getKeyStore(), certificate.getPassword());
+                } catch (CertificateException | KeyStoreException | IOException | NoSuchAlgorithmException e) {
+                    throw new RuntimeException(e);
+                }
+                ByteArrayInputStream certificateBytes = new ByteArrayInputStream(pkcs12Bytes);
+
+                IdentityClientOptions identityClientOptions = new IdentityClientOptions();
+                identityClientOptions.setHttpClient(HttpClientRetriever.get());
+
+                return new ClientCertificateCredentialBuilder()
+                        .clientId(azureCredentials.getClientId())
+                        .pfxCertificate(certificateBytes)
+                        .tenantId(azureCredentials.getTenant())
+                        .authorityHost(azureCredentials.getAzureEnvironment().getActiveDirectoryEndpoint())
+                        .httpClient(HttpClientRetriever.get())
+                        .build();
+            }
+
             return new ClientSecretCredentialBuilder()
                     .clientId(azureCredentials.getClientId())
                     .clientSecret(azureCredentials.getPlainClientSecret())
@@ -587,6 +611,21 @@ public class AzureCredentials extends AzureBaseCredentials {
             return credentialBuilder.build();
         }
         throw new RuntimeException(String.format("Unsupported credential: %s", credentials.getId()));
+    }
+
+    private static StandardCertificateCredentials getCertificateCredentials(AzureCredentials azureCredentials) {
+        String certificateId = azureCredentials.getCertificateId();
+        StandardCertificateCredentials certificate =
+                getCredentials(StandardCertificateCredentials.class, certificateId, ACL.SYSTEM);
+        if (certificate == null) {
+            certificate =
+                    getCredentials(StandardCertificateCredentials.class, certificateId, Jenkins.getAuthentication());
+        }
+
+        if (certificate == null) {
+            throw new RuntimeException("Couldn't find certificate: " + azureCredentials.getCertificateId());
+        }
+        return certificate;
     }
 
     public static TokenCredential getCredentialById(Item owner, String credentialId) {
@@ -814,8 +853,8 @@ public class AzureCredentials extends AzureBaseCredentials {
             }
 
             return model.includeCurrentValue(certificateId)
-                    .includeAs(Jenkins.getAuthentication(), owner, CertificateCredentialsImpl.class)
-                    .includeAs(ACL.SYSTEM, owner, CertificateCredentialsImpl.class);
+                    .includeAs(Jenkins.getAuthentication(), owner, StandardCertificateCredentials.class)
+                    .includeAs(ACL.SYSTEM, owner, StandardCertificateCredentials.class);
         }
 
         public ListBoxModel doFillAzureEnvironmentNameItems() {
