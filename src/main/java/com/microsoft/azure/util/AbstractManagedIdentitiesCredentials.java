@@ -2,6 +2,7 @@ package com.microsoft.azure.util;
 
 import com.azure.core.management.AzureEnvironment;
 import com.cloudbees.plugins.credentials.CredentialsScope;
+import java.io.Serial;
 import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 
@@ -9,6 +10,7 @@ public abstract class AbstractManagedIdentitiesCredentials extends AzureBaseCred
     private String azureEnvName;
     private transient AzureEnvironment azureEnvironment;
 
+    @Serial
     protected Object readResolve() {
         if (StringUtils.isEmpty(azureEnvName)) {
             this.azureEnvName = AzureEnvUtil.Constants.ENV_AZURE;

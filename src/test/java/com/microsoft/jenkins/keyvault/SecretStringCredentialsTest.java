@@ -29,16 +29,11 @@ public class SecretStringCredentialsTest {
 
     @Test
     public void getSecret() {
-        final BaseSecretCredentials.SecretGetter secretGetter = new BaseSecretCredentials.SecretGetter() {
-            @Override
-            public KeyVaultSecret getKeyVaultSecret(String credentialId, String secretIdentifier) {
-                Assert.assertEquals("spId", credentialId);
-                Assert.assertEquals("secretId", secretIdentifier);
+        final BaseSecretCredentials.SecretGetter secretGetter = (credentialId, secretIdentifier) -> {
+            Assert.assertEquals("spId", credentialId);
+            Assert.assertEquals("secretId", secretIdentifier);
 
-                final KeyVaultSecret secretBundle = new KeyVaultSecret("name", "Secret");
-
-                return secretBundle;
-            }
+            return new KeyVaultSecret("name", "Secret");
         };
         final SecretStringCredentials c =
                 new SecretStringCredentials(CredentialsScope.SYSTEM, "id", "desc", "spId", "secretId");

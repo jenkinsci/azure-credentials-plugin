@@ -16,6 +16,7 @@ import com.microsoft.azure.util.AzureCredentials;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
+import java.io.Serial;
 import java.net.MalformedURLException;
 import java.net.URL;
 import jenkins.model.Jenkins;
@@ -24,6 +25,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 public class BaseSecretCredentials extends BaseStandardCredentials {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private transient SecretGetter secretGetter;
@@ -111,8 +113,8 @@ public class BaseSecretCredentials extends BaseStandardCredentials {
                 }
             }
             return model.includeCurrentValue(servicePrincipalId)
-                    .includeAs(Jenkins.getAuthentication(), owner, AzureCredentials.class)
-                    .includeAs(ACL.SYSTEM, owner, AzureCredentials.class);
+                    .includeAs(Jenkins.getAuthentication2(), owner, AzureCredentials.class)
+                    .includeAs(ACL.SYSTEM2, owner, AzureCredentials.class);
         }
     }
 }

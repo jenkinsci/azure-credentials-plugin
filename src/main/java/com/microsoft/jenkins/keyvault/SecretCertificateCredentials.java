@@ -16,6 +16,7 @@ import hudson.util.FormValidation;
 import hudson.util.Secret;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.Serial;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -33,7 +34,9 @@ import org.kohsuke.stapler.verb.POST;
 
 public class SecretCertificateCredentials extends BaseSecretCredentials implements StandardCertificateCredentials {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private static final Logger LOGGER = Logger.getLogger(SecretCertificateCredentials.class.getName());
 
     private final Secret password;
