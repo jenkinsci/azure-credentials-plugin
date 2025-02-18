@@ -76,7 +76,7 @@ public class ITSecretCertificateCredentials extends KeyVaultIntegrationTestBase 
         final String cert =
                 IOUtils.toString(getClass().getResourceAsStream("../cert_no_private.pfx.b64"), StandardCharsets.UTF_8);
         final KeyVaultSecret secretBundle = createSecret("secret-cert-no-private", cert);
-        final String secretIdentifier = secretBundle.getId().toString();
+        final String secretIdentifier = secretBundle.getId();
 
         // Verify configuration
         final SecretCertificateCredentials.DescriptorImpl descriptor =

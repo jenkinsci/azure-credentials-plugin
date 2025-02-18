@@ -11,6 +11,7 @@ import hudson.Extension;
 import hudson.model.Item;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
+import java.io.Serial;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.AncestorInPath;
@@ -20,6 +21,7 @@ import org.kohsuke.stapler.verb.POST;
 
 public class SecretStringCredentials extends BaseSecretCredentials implements StringCredentials {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @DataBoundConstructor

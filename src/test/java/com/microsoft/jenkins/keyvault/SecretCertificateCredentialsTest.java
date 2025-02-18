@@ -17,6 +17,7 @@ import hudson.security.AccessDeniedException3;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -60,7 +61,7 @@ public class SecretCertificateCredentialsTest {
             throws IOException, KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
         final SecretCertificateCredentials c = new SecretCertificateCredentials(
                 CredentialsScope.SYSTEM, "id", "desc", "spId", "secretId", Secret.fromString("123456"));
-        final String cert = IOUtils.toString(getClass().getResourceAsStream("cert.pfx.b64"), "UTF-8");
+        final String cert = IOUtils.toString(getClass().getResourceAsStream("cert.pfx.b64"), StandardCharsets.UTF_8);
         c.setSecretGetter(new MockCertSecretGetter(cert));
 
         final KeyStore keyStore = c.getKeyStore();

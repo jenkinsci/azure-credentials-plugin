@@ -14,8 +14,8 @@ public final class AzureCredentialUtil {
 
     public static AzureBaseCredentials getCredential(@Nullable Item owner, String credentialId) {
         return CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(
-                        AzureBaseCredentials.class, owner, ACL.SYSTEM, Collections.emptyList()),
+                CredentialsProvider.lookupCredentialsInItem(
+                        AzureBaseCredentials.class, owner, ACL.SYSTEM2, Collections.emptyList()),
                 CredentialsMatchers.withId(credentialId));
     }
 

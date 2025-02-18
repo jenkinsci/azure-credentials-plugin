@@ -41,6 +41,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectStreamException;
+import java.io.Serial;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -48,13 +49,13 @@ import java.security.cert.CertificateException;
 import java.util.Collections;
 import java.util.List;
 import jenkins.model.Jenkins;
-import org.acegisecurity.Authentication;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
+import org.springframework.security.core.Authentication;
 
 public class AzureCredentials extends AzureBaseCredentials {
     public static class ValidationException extends Exception {
@@ -69,6 +70,7 @@ public class AzureCredentials extends AzureBaseCredentials {
     }
 
     public static class ServicePrincipal implements java.io.Serializable {
+        @Serial
         private static final long serialVersionUID = 1L;
 
         private final Secret subscriptionId;
@@ -108,6 +110,7 @@ public class AzureCredentials extends AzureBaseCredentials {
          * XStream serialization / deserialization used by Jenkins doesn't support objects with  readObject/writeObject
          * defined.
          */
+        @Serial
         private Object readResolve() throws ObjectStreamException {
             return this;
         }
@@ -165,9 +168,10 @@ public class AzureCredentials extends AzureBaseCredentials {
                 return null;
             }
             StandardCertificateCredentials certificate =
-                    getCredentials(StandardCertificateCredentials.class, certificateId, ACL.SYSTEM);
+                    getCredentials(StandardCertificateCredentials.class, certificateId, ACL.SYSTEM2);
             if (certificate == null) {
-                return getCredentials(StandardCertificateCredentials.class, certificateId, Jenkins.getAuthentication());
+                return getCredentials(
+                        StandardCertificateCredentials.class, certificateId, Jenkins.getAuthentication2());
             }
             return certificate;
         }
@@ -557,14 +561,13 @@ public class AzureCredentials extends AzureBaseCredentials {
     private static <T extends Credentials> T getCredentials(
             Class<T> type, String certificateId, Authentication authentication) {
         return CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(type, Jenkins.get(), authentication, Collections.emptyList()),
+                CredentialsProvider.lookupCredentialsInItemGroup(
+                        type, Jenkins.get(), authentication, Collections.emptyList()),
                 CredentialsMatchers.withId(certificateId));
     }
 
     public static TokenCredential getTokenCredential(AzureBaseCredentials credentials) {
-        if (credentials instanceof AzureCredentials) {
-            AzureCredentials azureCredentials = (AzureCredentials) credentials;
-
+        if (credentials instanceof AzureCredentials azureCredentials) {
             String secret = azureCredentials.getPlainClientSecret();
             if (StringUtils.isEmpty(secret) && StringUtils.isNotBlank(azureCredentials.getCertificateId())) {
                 StandardCertificateCredentials certificate = getCertificateCredentials(azureCredentials);
@@ -598,9 +601,7 @@ public class AzureCredentials extends AzureBaseCredentials {
                     .build();
         }
 
-        if (credentials instanceof AzureImdsCredentials) {
-            AzureImdsCredentials idmsCredentials = (AzureImdsCredentials) credentials;
-
+        if (credentials instanceof AzureImdsCredentials idmsCredentials) {
             ManagedIdentityCredentialBuilder credentialBuilder =
                     new ManagedIdentityCredentialBuilder().httpClient(HttpClientRetriever.get());
 
@@ -616,10 +617,10 @@ public class AzureCredentials extends AzureBaseCredentials {
     private static StandardCertificateCredentials getCertificateCredentials(AzureCredentials azureCredentials) {
         String certificateId = azureCredentials.getCertificateId();
         StandardCertificateCredentials certificate =
-                getCredentials(StandardCertificateCredentials.class, certificateId, ACL.SYSTEM);
+                getCredentials(StandardCertificateCredentials.class, certificateId, ACL.SYSTEM2);
         if (certificate == null) {
             certificate =
-                    getCredentials(StandardCertificateCredentials.class, certificateId, Jenkins.getAuthentication());
+                    getCredentials(StandardCertificateCredentials.class, certificateId, Jenkins.getAuthentication2());
         }
 
         if (certificate == null) {
@@ -853,8 +854,8 @@ public class AzureCredentials extends AzureBaseCredentials {
             }
 
             return model.includeCurrentValue(certificateId)
-                    .includeAs(Jenkins.getAuthentication(), owner, StandardCertificateCredentials.class)
-                    .includeAs(ACL.SYSTEM, owner, StandardCertificateCredentials.class);
+                    .includeAs(Jenkins.getAuthentication2(), owner, StandardCertificateCredentials.class)
+                    .includeAs(ACL.SYSTEM2, owner, StandardCertificateCredentials.class);
         }
 
         public ListBoxModel doFillAzureEnvironmentNameItems() {
