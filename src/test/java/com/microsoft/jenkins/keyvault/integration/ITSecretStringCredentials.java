@@ -5,18 +5,23 @@
 
 package com.microsoft.jenkins.keyvault.integration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.microsoft.jenkins.keyvault.SecretStringCredentials;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
-import org.junit.Assert;
-import org.junit.Test;
+import java.io.IOException;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class ITSecretStringCredentials extends KeyVaultIntegrationTestBase {
+@WithJenkins
+class ITSecretStringCredentials extends KeyVaultIntegrationTestBase {
 
     @Test
-    public void getSecret() {
+    void getSecret() {
         final KeyVaultSecret secretBundle = createSecret("secret-string", "I'm secret");
         final String secretIdentifier = secretBundle.getId();
 
@@ -24,33 +29,28 @@ public class ITSecretStringCredentials extends KeyVaultIntegrationTestBase {
         final SecretStringCredentials.DescriptorImpl descriptor = new SecretStringCredentials.DescriptorImpl();
         final FormValidation result =
                 descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId, secretIdentifier);
-        Assert.assertEquals(FormValidation.Kind.OK, result.kind);
+        assertEquals(FormValidation.Kind.OK, result.kind);
 
         // Get secret
         final SecretStringCredentials credentials = new SecretStringCredentials(
                 CredentialsScope.SYSTEM, "", "", jenkinsAzureCredentialsId, secretIdentifier);
         final Secret secret = credentials.getSecret();
-        Assert.assertEquals("I'm secret", secret.getPlainText());
+        assertEquals("I'm secret", secret.getPlainText());
     }
 
     @Test
-    public void getSecretNotFound() {
+    void getSecretNotFound() {
         final String secretIdentifier = vaultUri + "/secrets/not-found/869660651aa3436994bd7290704c9394";
 
         // Verify configuration
         final SecretStringCredentials.DescriptorImpl descriptor = new SecretStringCredentials.DescriptorImpl();
         final FormValidation result =
                 descriptor.doVerifyConfiguration(null, jenkinsAzureCredentialsId, secretIdentifier);
-        Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
+        assertEquals(FormValidation.Kind.ERROR, result.kind);
 
         // Get secret
         final SecretStringCredentials credentials = new SecretStringCredentials(
                 CredentialsScope.SYSTEM, "", "", jenkinsAzureCredentialsId, secretIdentifier);
-        try {
-            final Secret secret = credentials.getSecret();
-            Assert.fail("Should throw exception but not");
-        } catch (Exception e) {
-            // Expect exception
-        }
+        assertThrows(IOException.class, credentials::getSecret);
     }
 }

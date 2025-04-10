@@ -5,6 +5,9 @@
 
 package com.microsoft.jenkins.keyvault.integration;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.azure.identity.ClientSecretCredential;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.AzureResourceManager;
@@ -18,13 +21,13 @@ import com.cloudbees.plugins.credentials.domains.Domain;
 import com.microsoft.azure.util.AzureCredentials;
 import com.microsoft.jenkins.integration.IntegrationTestBase;
 import hudson.util.Secret;
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-import org.junit.Assert;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
+@WithJenkins
+abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
 
     private static final Logger LOGGER = Logger.getLogger(KeyVaultIntegrationTestBase.class.getName());
 
@@ -32,8 +35,8 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
     protected String vaultUri;
     protected final String jenkinsAzureCredentialsId = "tst-keyvault-sp";
 
-    @Before
-    public void setUp() throws InterruptedException {
+    @BeforeEach
+    void setUp() throws InterruptedException {
         // Create Azure KeyVault
         final AzureResourceManager azureClient = IntegrationTestBase.getAzureClient();
         vaultName = "tst-vault-" + TestEnvironment.GenerateRandomString(5);
@@ -63,11 +66,9 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
 
         final CredentialsStore store =
                 CredentialsProvider.lookupStores(j.jenkins).iterator().next();
-        try {
+        assertDoesNotThrow(() -> {
             store.addCredentials(Domain.global(), credentials);
-        } catch (IOException e) {
-            Assert.fail(e.getMessage());
-        }
+        });
     }
 
     /**
@@ -89,7 +90,7 @@ public abstract class KeyVaultIntegrationTestBase extends IntegrationTestBase {
             }
             return;
         }
-        Assert.fail("Key vault still not available after timeout.");
+        fail("Key vault still not available after timeout.");
     }
 
     protected KeyVaultSecret createSecret(final String name, final String value) {

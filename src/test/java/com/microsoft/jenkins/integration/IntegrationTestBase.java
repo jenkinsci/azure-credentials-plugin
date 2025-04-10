@@ -14,20 +14,17 @@ import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.AzureResourceManager;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Timeout;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
+@WithJenkins
+@Timeout(value = 20, unit = TimeUnit.MINUTES)
 public abstract class IntegrationTestBase {
 
-    @ClassRule
-    public static JenkinsRule j = new JenkinsRule();
-
-    @Rule
-    public Timeout globalTimeout = new Timeout(20, TimeUnit.MINUTES);
+    protected static JenkinsRule j;
 
     protected static class TestEnvironment {
         private static final String ENV_PREFIX = "AZURE_CREDENTIALS_TEST_";
@@ -71,15 +68,16 @@ public abstract class IntegrationTestBase {
 
     protected static TestEnvironment testEnv = null;
 
-    @BeforeClass
-    public static void setUpClass() {
+    @BeforeAll
+    static void setUp(JenkinsRule rule) {
+        j = rule;
         if (testEnv == null) {
             testEnv = new TestEnvironment();
         }
     }
 
-    @AfterClass
-    public static void tearDownClass() {
+    @AfterAll
+    static void tearDown() {
         try {
             final AzureResourceManager azureClient = getAzureClient();
             azureClient.resourceGroups().deleteByNameAsync(testEnv.resourceGroup);
