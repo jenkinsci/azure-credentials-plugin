@@ -5,6 +5,9 @@
 
 package com.microsoft.jenkins.keyvault;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.cloudbees.hudson.plugins.folder.Folder;
 import com.cloudbees.plugins.credentials.CredentialsScope;
@@ -16,22 +19,19 @@ import hudson.security.AccessDeniedException3;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class SecretStringCredentialsTest {
-
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+@WithJenkins
+class SecretStringCredentialsTest {
 
     @Test
-    public void getSecret() {
+    void getSecret(JenkinsRule j) {
         final BaseSecretCredentials.SecretGetter secretGetter = (credentialId, secretIdentifier) -> {
-            Assert.assertEquals("spId", credentialId);
-            Assert.assertEquals("secretId", secretIdentifier);
+            assertEquals("spId", credentialId);
+            assertEquals("secretId", secretIdentifier);
 
             return new KeyVaultSecret("name", "Secret");
         };
@@ -40,20 +40,20 @@ public class SecretStringCredentialsTest {
         c.setSecretGetter(secretGetter);
 
         final Secret secret = c.getSecret();
-        Assert.assertEquals("Secret", secret.getPlainText());
+        assertEquals("Secret", secret.getPlainText());
     }
 
     @Test
-    public void descriptorVerifyConfigurationAsAdmin() {
+    void descriptorVerifyConfigurationAsAdmin(JenkinsRule j) {
         // No security realm, anonymous has Overall/Administer
         final SecretStringCredentials.DescriptorImpl descriptor = new SecretStringCredentials.DescriptorImpl();
 
         FormValidation result = descriptor.doVerifyConfiguration(null, "", "");
-        Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
+        assertEquals(FormValidation.Kind.ERROR, result.kind);
     }
 
     @Test
-    public void descriptorVerifyConfigurationWithAncestorAsAuthorizedUser() throws Exception {
+    void descriptorVerifyConfigurationWithAncestorAsAuthorizedUser(JenkinsRule j) throws Exception {
         Folder folder = j.jenkins.createProject(Folder.class, "folder");
         j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
         MockAuthorizationStrategy authorizationStrategy = new MockAuthorizationStrategy();
@@ -67,12 +67,12 @@ public class SecretStringCredentialsTest {
             FormValidation result = descriptor.doVerifyConfiguration(folder, "", "");
             // we aren't looking up an actual secret so this fails with missing protocol
             // TODO mock secrets retrieval so we can test the happy case here properly
-            Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
+            assertEquals(FormValidation.Kind.ERROR, result.kind);
         }
     }
 
     @Test
-    public void descriptorVerifyConfigurationWithAncestorAsUnauthorizedUser() throws Exception {
+    void descriptorVerifyConfigurationWithAncestorAsUnauthorizedUser(JenkinsRule j) throws Exception {
         Folder folder = j.jenkins.createProject(Folder.class, "folder");
         j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
         MockAuthorizationStrategy authorizationStrategy = new MockAuthorizationStrategy();
@@ -82,7 +82,7 @@ public class SecretStringCredentialsTest {
         final SecretStringCredentials.DescriptorImpl descriptor = new SecretStringCredentials.DescriptorImpl();
 
         try (ACLContext ctx = ACL.as(User.getOrCreateByIdOrFullName("user"))) {
-            Assert.assertThrows(AccessDeniedException3.class, () -> descriptor.doVerifyConfiguration(folder, "", ""));
+            assertThrows(AccessDeniedException3.class, () -> descriptor.doVerifyConfiguration(folder, "", ""));
         }
     }
 }

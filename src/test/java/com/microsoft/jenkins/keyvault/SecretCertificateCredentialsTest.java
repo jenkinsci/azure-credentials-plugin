@@ -5,6 +5,10 @@
 
 package com.microsoft.jenkins.keyvault;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
 import com.cloudbees.hudson.plugins.folder.Folder;
@@ -25,16 +29,13 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class SecretCertificateCredentialsTest {
-
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+@WithJenkins
+class SecretCertificateCredentialsTest {
 
     private static class MockCertSecretGetter implements BaseSecretCredentials.SecretGetter {
 
@@ -46,8 +47,8 @@ public class SecretCertificateCredentialsTest {
 
         @Override
         public KeyVaultSecret getKeyVaultSecret(String credentialId, String secretIdentifier) {
-            Assert.assertEquals("spId", credentialId);
-            Assert.assertEquals("secretId", secretIdentifier);
+            assertEquals("spId", credentialId);
+            assertEquals("secretId", secretIdentifier);
 
             final KeyVaultSecret secretBundle = new KeyVaultSecret("name", cert);
             secretBundle.setProperties(new SecretProperties().setContentType("application/x-pkcs12"));
@@ -57,7 +58,7 @@ public class SecretCertificateCredentialsTest {
     }
 
     @Test
-    public void getKeyStore()
+    void getKeyStore(JenkinsRule j)
             throws IOException, KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
         final SecretCertificateCredentials c = new SecretCertificateCredentials(
                 CredentialsScope.SYSTEM, "id", "desc", "spId", "secretId", Secret.fromString("123456"));
@@ -65,24 +66,24 @@ public class SecretCertificateCredentialsTest {
         c.setSecretGetter(new MockCertSecretGetter(cert));
 
         final KeyStore keyStore = c.getKeyStore();
-        Assert.assertTrue(keyStore.containsAlias("msft"));
-        Assert.assertEquals(1, keyStore.size());
+        assertTrue(keyStore.containsAlias("msft"));
+        assertEquals(1, keyStore.size());
         final Key key = keyStore.getKey("msft", "123456".toCharArray());
-        Assert.assertEquals("RSA", key.getAlgorithm());
+        assertEquals("RSA", key.getAlgorithm());
     }
 
     @Test
-    public void descriptorVerifyConfigurationAsAdmin() {
+    void descriptorVerifyConfigurationAsAdmin(JenkinsRule j) {
         // No security realm, anonymous has Overall/Administer
         final SecretCertificateCredentials.DescriptorImpl descriptor =
                 new SecretCertificateCredentials.DescriptorImpl();
 
         FormValidation result = descriptor.doVerifyConfiguration(null, "", "", Secret.fromString(""));
-        Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
+        assertEquals(FormValidation.Kind.ERROR, result.kind);
     }
 
     @Test
-    public void descriptorVerifyConfigurationWithAncestorAsAuthorizedUser() throws Exception {
+    void descriptorVerifyConfigurationWithAncestorAsAuthorizedUser(JenkinsRule j) throws Exception {
         Folder folder = j.jenkins.createProject(Folder.class, "folder");
         j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
         MockAuthorizationStrategy authorizationStrategy = new MockAuthorizationStrategy();
@@ -97,12 +98,12 @@ public class SecretCertificateCredentialsTest {
             FormValidation result = descriptor.doVerifyConfiguration(folder, "", "", Secret.fromString(""));
             // we aren't looking up an actual secret so this fails with missing protocol
             // TODO mock secrets retrieval so we can test the happy case here properly
-            Assert.assertEquals(FormValidation.Kind.ERROR, result.kind);
+            assertEquals(FormValidation.Kind.ERROR, result.kind);
         }
     }
 
     @Test
-    public void descriptorVerifyConfigurationWithAncestorAsUnauthorizedUser() throws Exception {
+    void descriptorVerifyConfigurationWithAncestorAsUnauthorizedUser(JenkinsRule j) throws Exception {
         Folder folder = j.jenkins.createProject(Folder.class, "folder");
         j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
         MockAuthorizationStrategy authorizationStrategy = new MockAuthorizationStrategy();
@@ -113,7 +114,7 @@ public class SecretCertificateCredentialsTest {
                 new SecretCertificateCredentials.DescriptorImpl();
 
         try (ACLContext ctx = ACL.as(User.getOrCreateByIdOrFullName("user"))) {
-            Assert.assertThrows(
+            assertThrows(
                     AccessDeniedException3.class,
                     () -> descriptor.doVerifyConfiguration(folder, "", "", Secret.fromString("")));
         }
