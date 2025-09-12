@@ -400,7 +400,11 @@ public class AzureCredentials extends AzureBaseCredentials {
                         return true;
                     }
                 }
-            } catch (CertificateException | KeyStoreException | IOException | NoSuchAlgorithmException e) {
+            } catch (RuntimeException
+                    | CertificateException
+                    | KeyStoreException
+                    | IOException
+                    | NoSuchAlgorithmException e) {
                 throw new ValidationException(Messages.Azure_CantValidate() + ": " + e.getMessage(), e);
             }
             throw new ValidationException(Messages.Azure_Invalid_SubscriptionId());
