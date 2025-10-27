@@ -293,7 +293,7 @@ public class AzureCredentials extends AzureBaseCredentials {
         public ServicePrincipal(String subscriptionId, String clientId, Secret clientSecret) {
             this.subscriptionId = Secret.fromString(subscriptionId);
             this.clientId = Secret.fromString(clientId);
-            this.clientSecret = clientSecret;
+            this.clientSecret = clientSecret != null ? clientSecret : Secret.fromString("");
             this.tenant = Secret.fromString("");
         }
 
