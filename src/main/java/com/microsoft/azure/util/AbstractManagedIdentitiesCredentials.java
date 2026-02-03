@@ -4,7 +4,7 @@ import com.azure.core.management.AzureEnvironment;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import java.io.Serial;
 import java.util.Map;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public abstract class AbstractManagedIdentitiesCredentials extends AzureBaseCredentials {
     private String azureEnvName;
