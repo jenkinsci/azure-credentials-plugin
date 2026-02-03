@@ -2,7 +2,7 @@ package com.microsoft.azure.util;
 
 import com.azure.core.management.AzureEnvironment;
 import java.util.HashMap;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public final class AzureEnvUtil {
     static boolean resolveOverride(AzureEnvironment environment, AzureEnvironment.Endpoint endpoint, String stored) {
